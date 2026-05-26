@@ -58,3 +58,7 @@ Change those once, here, and every partner inherits it.
 | `centralapi` | design → contract | replaces raw-LINE-passthrough; P0 = ownership + profile-enriched envelope + inbound content |
 
 Design narrative for CA: see konkui state `plans/centralapi-konkui-redesign.md`.
+
+## License
+
+Proprietary — internal EEC use only. See [LICENSE](./LICENSE).
