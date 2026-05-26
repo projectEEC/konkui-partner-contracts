@@ -567,10 +567,10 @@ components:
             Parent identity is NEVER returned — only the canonical label.
           example: "ผู้ปกครองของนักศึกษานายสมชาย ใจดี"
         stdInfo:
-          $ref: "#/components/schemas/StdInfoBrief"
+          allOf: [{ $ref: "#/components/schemas/StdInfoBrief" }]
           nullable: true
         lastMessage:
-          $ref: "#/components/schemas/LastMessage"
+          allOf: [{ $ref: "#/components/schemas/LastMessage" }]
           nullable: true
         unreadCount: { type: integer, example: 2 }
 
@@ -615,7 +615,7 @@ components:
         role: { type: string, enum: ["student", "parent"] }
         displayLabel: { type: string }
         stdInfo:
-          $ref: "#/components/schemas/StdInfoFull"
+          allOf: [{ $ref: "#/components/schemas/StdInfoFull" }]
           nullable: true
         messages:
           type: array

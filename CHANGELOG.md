@@ -1,25 +1,30 @@
 # Changelog
 
-All notable changes to the partner-contract standard and per-partner contracts.
-Format: shared changes under **Standard**, partner changes under **partners/<name>**.
+All notable changes to the standard and to the example integrations.
+Format: shared changes under **Standard**, example changes under **examples/<name>**.
 
 ## [Unreleased]
 
 ### Standard
 - Initial monorepo extraction. Root `STANDARDS.md` + `envelope/skeleton.md` promoted as
-  the cross-partner rulebook, genericized from the StudentCare contract (auth, payload,
-  error, idempotency, versioning, SLA, logging, forbidden, waiver).
-- Added `envelope/skeleton.md` — shared inbound event-envelope shape all partners extend.
-- Media handling + scope / data-ownership moved out of the shared rulebook into
-  per-partner `STANDARDS-addendum.md`.
+  the neutral rulebook, genericized from the first integration (auth, payload, error,
+  idempotency, versioning, SLA, logging, forbidden, waiver).
+- Added `envelope/skeleton.md` — shared inbound event-envelope shape all integrations fill in.
+- Added `conformance/.spectral.yaml` — Spectral ruleset linting a spec against the standard.
+- Reframed scope: konkui defines its inbound webhook + envelope + shared rules and STATES
+  the capabilities it needs; the integrating system designs its own API + internal
+  routing/ownership/follow logic.
+- **Made the core neutral** — `STANDARDS.md`, `envelope/skeleton.md`, `conformance/` name
+  no specific system; concrete integrations moved under `examples/` (renamed from
+  `partners/`) as illustrations only.
 
-### partners/studentcare
-- Migrated from standalone `studentcare-konkui-contract` repo (copy, no wire change).
-  SC-specific media (25 MB inline) + scope/data-ownership extracted to
-  `partners/studentcare/STANDARDS-addendum.md`. Original repo stays live until SC team cutover.
+### examples/studentcare
+- Migrated from standalone `studentcare-konkui-contract` repo (copy, no wire change),
+  then re-synced to its v1.3.0 state. System-specific media (25 MB inline) + scope/
+  data-ownership in `STANDARDS-addendum.md`.
 
-### partners/centralapi
-- Authored from `centralapi-konkui-redesign.md`. Replaces raw-LINE passthrough.
-  Envelope (`konkui-side-v1.yaml`), gateway P0–P3 (`ca-side-v1.yaml`), media waiver
-  (200 MB metadata+fetch), what-konkui-needs requirements, error cases, auth cutover.
-  Later reframed: konkui states needs only; partner designs its own API + routing/ownership.
+### examples/centralapi
+- Authored from a redesign as a worked example. Replaces a raw-LINE passthrough.
+  Firm webhook (`konkui-side-v1.yaml`) + reference API (`ca-side-v1.yaml`, non-binding),
+  media waiver (200 MB metadata+fetch), what-konkui-needs requirements, error cases,
+  auth cutover. The integrating system designs its own API + routing/ownership.

@@ -158,8 +158,8 @@ components:
         senderRole:
           type: string
           nullable: true
-          description: "Allowed: 'student' or 'parent' or 'advisor' or 'admin'. Unknown values coerced to 'other'."
-          enum: [student, parent, advisor, admin, other, null]
+          description: "Allowed: 'student' or 'parent' or 'advisor' or 'admin'. Unknown values coerced to 'other'. May be null (see nullable)."
+          enum: [student, parent, advisor, admin, other]
         advisorTeacherNo:
           type: string
           nullable: true

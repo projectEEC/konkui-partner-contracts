@@ -1,0 +1,76 @@
+# konkui partner-contract conformance ruleset (Spectral).
+# Lints a partner's OpenAPI specs against the firm rules in ../STANDARDS.md.
+# Run:  npx @stoplight/spectral-cli lint <spec.yaml> --ruleset conformance/.spectral.yaml
+#
+# Scope: enforces what konkui defines (auth, error shape, payload conventions, transport).
+# It does NOT judge a partner's own API design — only that the wire follows the standard.
+
+extends:
+  - "spectral:oas"        # built-in OpenAPI 3.x structural validation
+
+rules:
+  # Tags are doc-organization, not part of konkui's standard — don't require them.
+  operation-tags: off
+
+  # STANDARDS §1 — HTTPS only.
+  konkui-https-only:
+    description: All server URLs must be HTTPS (STANDARDS §1).
+    message: "Server URL must be https:// — got '{{value}}'"
+    severity: error
+    given: "$.servers[*].url"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^https://"
+
+  # STANDARDS §4 — error field is `responseMesg` (legacy spelling), never `responseMessage`.
+  konkui-error-field-spelling:
+    description: Use `responseMesg`, never `responseMessage` (STANDARDS §4).
+    message: "Error field must be `responseMesg`, not `responseMessage`"
+    severity: error
+    given: "$..properties"
+    then:
+      field: responseMessage
+      function: undefined
+
+  # STANDARDS §4 — an error schema must carry `responseCode`.
+  konkui-error-has-responsecode:
+    description: Error-shaped schemas must include `responseCode` (STANDARDS §4).
+    message: "A schema named like an error must define `responseCode`"
+    severity: warn
+    given: "$.components.schemas[?(@property.match(/error/i))].properties"
+    then:
+      field: responseCode
+      function: truthy
+
+  # STANDARDS §3 — JSON field naming is camelCase.
+  konkui-property-camelcase:
+    description: Schema property names must be camelCase (STANDARDS §3).
+    message: "Property `{{property}}` is not camelCase"
+    severity: warn
+    given: "$..properties"
+    then:
+      field: "@key"
+      function: casing
+      functionOptions:
+        type: camel
+
+  # STANDARDS §2 — state-changing operations MUST declare HMAC security explicitly
+  # (GET reads may inherit a global X-Api-Secret, so they are not checked here).
+  konkui-write-op-security:
+    description: State-changing operations must declare `security` (HMAC + X-Api-Secret, STANDARDS §2).
+    message: "State-changing operation has no explicit `security` declared"
+    severity: warn
+    given: "$.paths[*][post,put,delete,patch]"
+    then:
+      field: security
+      function: truthy
+
+  # Hygiene — every operation has an operationId + a summary/description.
+  konkui-operation-id:
+    description: Every operation needs an operationId.
+    severity: warn
+    given: "$.paths[*][get,post,put,delete,patch]"
+    then:
+      field: operationId
+      function: truthy

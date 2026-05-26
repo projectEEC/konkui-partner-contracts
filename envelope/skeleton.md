@@ -1,9 +1,9 @@
 # Inbound Event Envelope — Shared Skeleton
 
 Every partner pushes inbound events to konkui as **this** envelope. The top-level shape
-is identical across all partners so konkui has **one** webhook parser and **one** dedup
+is identical across all integrations so konkui has **one** webhook parser and **one** dedup
 model. Only the leaves (`source.*` enrichment and `message.*` subtypes) vary per platform,
-and each partner documents its leaves in `partners/<name>/payloads/`.
+and each integration documents its leaves in its own `payloads/` (see `examples/`).
 
 > This skeleton is the canonical target. A partner does **not** invent its own envelope
 > shape — it fills this one in. If a real field has nowhere to go here, that is a
@@ -25,7 +25,7 @@ and each partner documents its leaves in `partners/<name>/payloads/`.
         "userId": "string",         // REQUIRED — stable external user id; konkui's routing key
         "displayName": "string",    // string|null — partner SHOULD enrich
         "pictureUrl": "string",     // string|null — partner SHOULD enrich
-        "...": "..."                // partner-specific identity leaves (e.g. SC stdNo, LINE language)
+        "...": "..."                // platform-specific identity leaves (e.g. a user/account number, a locale)
       },
       "message": {                  // present when type=message
         "id": "string",             // REQUIRED — dedup key for message events; stable across retries

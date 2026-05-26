@@ -1,14 +1,14 @@
 # Contract Standards — Non-Negotiable
 
-These rules apply to **every** partner platform that integrates with konkui. They are
+These rules apply to **every** system that integrates with konkui. They are
 enforced by Phanu via PR review. Any deviation requires an explicit waiver in the PR
 description with rationale + Phanu sign-off (see §12).
 
-Platform-specific rules (media limits, scope / data-ownership, capability matrix) do
-**not** live here — they live in `partners/<name>/STANDARDS-addendum.md`. This file is
-only what is true for all partners.
+System-specific rules (media limits, scope / data-ownership, the capabilities konkui needs)
+do **not** live here — they live in that integration's `STANDARDS-addendum.md` (see
+`examples/`). This file is only what is true for all integrations, and names no specific system.
 
-Throughout, **partner** = the proxied platform (e.g. SC, CA). konkui is the aggregator.
+Throughout, **partner** = any proxied system that integrates with konkui. konkui is the aggregator.
 
 ## 1. Transport
 
@@ -40,7 +40,7 @@ Secrets are per-environment, exchanged out-of-band, never committed:
 | `InboundSecret` | konkui | konkui → partner state-changing POST |
 | `ApiSecret` (`X-Api-Secret`) | shared | every konkui → partner call |
 
-See `partners/<name>/auth/` for the partner's concrete secret names + rotation.
+See that integration's `auth/` for its concrete secret names + rotation.
 
 ## 3. Payload
 
@@ -125,8 +125,8 @@ entirely on one side is **out of scope** and MUST be solved internally by that s
 - If konkui needs data not retrievable via the contract, the fix is **a new contract endpoint on the partner** — never a local konkui table mirroring partner state.
 - If a feature appears to need cross-side coordination beyond transport, open an issue first to decide whether it belongs in the contract or is owned by one side alone. **Default: owned by one side.**
 
-The concrete role split + data-ownership table is **partner-specific** (who owns master
-data, what konkui may cache, etc.) → declared in `partners/<name>/STANDARDS-addendum.md`.
+The concrete role split + data-ownership table is **integration-specific** (who owns master
+data, what konkui may cache, etc.) → declared in that integration's `STANDARDS-addendum.md`.
 
 ## 10. Forbidden
 
@@ -139,29 +139,25 @@ data, what konkui may cache, etc.) → declared in `partners/<name>/STANDARDS-ad
 - ❌ Breaking change without major version bump.
 - ❌ Logging secrets to disk or alert channels.
 
-## 11. Per-partner addenda (required reading per partner)
+## 11. Per-integration addenda
 
-Each partner folder carries, in addition to anything above it overrides via waiver:
+Each integration folder carries, in addition to anything above it overrides via waiver:
 
-- `STANDARDS-addendum.md` — media handling (size limits, inline-vs-fetch), scope / role / data-ownership table, domain error-code enum, capability matrix.
-- `auth/` — concrete secret names + rotation policy for that partner.
-- `api/*.yaml` — OpenAPI for both directions.
+- `STANDARDS-addendum.md` — media handling (size limits, inline-vs-fetch), scope / role / data-ownership, the capabilities konkui needs.
+- `auth/` — concrete secret names + rotation policy for that integration.
+- `api/*.yaml` — OpenAPI (firm konkui-side webhook + reference of the API konkui calls).
 - `payloads/` — concrete envelope examples.
 
-A partner addendum may **tighten** a shared rule but may only **loosen** one through the
+An addendum may **tighten** a shared rule but may only **loosen** one through the
 §12 waiver process.
 
 ## 12. Waiver process
 
 If a real constraint forces a deviation:
 
-1. Open PR with deviation + a `WAIVER.md` entry stating: rule, reason, scope (endpoint/partner), expiry.
+1. Open PR with deviation + a `WAIVER.md` entry stating: rule, reason, scope, expiry.
 2. Phanu reviews + accepts/rejects.
 3. Accepted waiver = time-boxed; must be revisited at expiry.
 
-Known standing waivers:
-
-| Partner | Rule | Deviation | Why |
-|---------|------|-----------|-----|
-| studentcare | media | inline base64 in payload | attachments ≤ 25 MB, inline is simplest |
-| centralapi | media | metadata-only + on-demand fetch | LINE media up to 200 MB; inlining base64 is unworkable |
+Each integration records its own standing waivers in its `STANDARDS-addendum.md`
+(e.g. a media-handling deviation). The core standard names no specific integration.
