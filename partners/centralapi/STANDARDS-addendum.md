@@ -25,24 +25,23 @@ signs state-changing POST), `ApiSecret` (every konkui → CA call). See `auth/`.
 
 ## What konkui needs (you design how)
 
-The OA is shared org-wide. These are konkui's **requirements** — the mechanism, routing
-rules, and API are CA's to design. konkui does not dictate CA's internal logic.
+CA owns its customers (the LINE users). CA decides which of them get connected to a konkui
+agent and sends konkui the events for those conversations — the same arrangement as SC
+connecting students to konkui agents. konkui provides the agent + the chat surface;
+**konkui's own data does not flow into CA.** Who gets connected, and any PII / consent
+handling for CA's users, is **CA's responsibility — not konkui's to specify or police.**
 
-konkui needs:
+To run the agent-side chat, konkui needs CA to expose (shape + method are yours):
 
-- A way to tell CA "this user is now konkui's" and later "release this user" (an
-  ownership / claim mechanism — the endpoint shape is yours).
-- Message / interaction events delivered **only** for users konkui owns.
-- **No profile or PII** (displayName, pictureUrl, …) for users konkui does **not** own —
-  avoid over-collection / PDPA exposure on a shared OA.
-- Whatever lifecycle signal CA can give so konkui can attach a follower to a pending
-  invite and then claim them. (Today konkui used `follow`; the exact signal is CA's call.)
-- Ownership that survives CA restarts and is **not** dropped on unfollow (a returning
-  customer keeps their owner); released only when konkui explicitly asks.
+- Display info (name, picture) for a connected conversation, so the agent sees who they
+  are talking to.
+- Inbound messages + media for that conversation (delivered via the webhook envelope;
+  media fetched on demand).
+- A way to send / reply messages + media back to that customer.
+- (nice-to-have) typing indicator, push quota.
 
-Once CA can satisfy the above, konkui drops its `LINE outbound-only / drop unknown` hack —
-non-customers (teachers, admins, random chatters) no longer reach konkui, fixing the
-"wrong new customer" bug at the source. **How** CA achieves this is out of scope here.
+Whatever filtering decides which conversations reach konkui is CA's design. konkui then
+drops its `LINE outbound-only / drop unknown` hack.
 
 ## Domain error-code enum (CA returns; konkui maps to Thai UI)
 
