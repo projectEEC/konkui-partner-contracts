@@ -24,7 +24,7 @@ SC's home inside the partner-contract monorepo (migrated from the standalone
 | Direction | Surface | Spec |
 |-----------|---------|------|
 | SC → konkui | webhook `POST /webhooks/studentcare/webhook` (enriched envelope) | `api/konkui-side-v1.yaml` |
-| konkui → SC | read API (threads, messages, attachment, advisor roster) | `api/sc-side-v1.yaml` |
+| konkui → SC | read API — v1.3 advisor-keyed (`/api/chat/advisors/{teacherNo}/threads` + `/students/{stdNo}/messages`), `admin/threads`, attachment, legacy roster | `api/sc-side-v1.yaml` |
 | konkui → SC | inbound reply `POST /webhook/chat/inbound` | `api/sc-side-v1.yaml` |
 
 ## Files

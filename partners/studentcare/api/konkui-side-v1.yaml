@@ -9,7 +9,7 @@ info:
     **Auth:** HMAC headers (`X-Timestamp` + `X-Signature`) signed with `WebhookSecret`. No `X-Api-Secret` on this direction.
 
     See `auth/hmac.md` for HMAC details. See `STANDARDS.md` for non-negotiable rules.
-  version: "1.0.0"
+  version: "1.3.0"
   contact:
     name: Phanu (konkui)
     email: eecprogrammer@gmail.com
@@ -29,6 +29,23 @@ paths:
         Each call delivers one batch of events. konkui dedups on `message.id` for ≥ 24h.
 
         **Retry policy (SC side):** On `5xx`, retry up to 3 times with exponential backoff. On `4xx`, do not retry.
+
+        **Error reporting (v1.3+, MANDATORY):** konkui MUST NOT return `200` when it failed to process the
+        batch. Generic 200 swallows real failures and leaves SC blind. Required behavior:
+
+        | Situation | HTTP status | Body |
+        |---|---|---|
+        | All events accepted (incl. dedup) | `200` | `WebhookAccepted` |
+        | Some events accepted, some failed | `200` | `WebhookAccepted` with `failures[]` populated |
+        | Invalid JSON / empty events / schema violation | `400` | `ErrorResponse` with `errorCode` |
+        | HMAC fail / timestamp skew / replay | `401` | `ErrorResponse` with `errorCode` |
+        | konkui internal error (DB down, deserialize crash, advisor directory unreachable, unhandled exception) | `5xx` | `ErrorResponse` with `errorCode` + safe `responseMesg` |
+
+        `responseMesg` MUST be human-readable, no PII, no stack trace. `errorCode` is machine-readable
+        for SC's alerting/retry logic. Unknown failure → `INTERNAL_ERROR` + 500.
+
+        **Never** wrap an internal exception in `{ responseCode: "200", responseMesg: "OK" }`. SC treats
+        200 as authoritative success and will not retry. Returning 200-on-error is a contract violation.
       security:
         - hmacTimestamp: []
           hmacSignature: []
@@ -48,17 +65,37 @@ paths:
             schema: { $ref: "#/components/schemas/StudentCareWebhookEnvelope" }
       responses:
         "200":
-          description: All events accepted (some may be dedup-skipped — still 200)
+          description: |
+            All events processed. `failures[]` MAY be present and non-empty if individual events
+            failed but the batch as a whole was handled. Dedup-skipped events are also 200.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WebhookAccepted" }
         "400":
-          description: Invalid JSON, empty events array, or other payload error
+          description: |
+            Invalid JSON, empty events array, schema violation, or other payload error.
+            `errorCode` REQUIRED.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
         "401":
-          description: HMAC validation failed
+          description: |
+            HMAC validation failed — bad signature, timestamp skew (>300s), or replay.
+            `errorCode` REQUIRED.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "500":
+          description: |
+            konkui internal error — DB down, dedup store unreachable, unhandled exception, etc.
+            SC will retry up to 3× with exponential backoff. `errorCode` REQUIRED.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "503":
+          description: |
+            konkui temporarily unavailable (maintenance, dependency down). SC retries.
+            `errorCode` REQUIRED. Set `Retry-After` header when possible.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
@@ -121,8 +158,23 @@ components:
         senderRole:
           type: string
           nullable: true
-          description: "Allowed: 'student' or 'parent'. Unknown values coerced to 'other'."
-          enum: [student, parent, other, null]
+          description: "Allowed: 'student' or 'parent' or 'advisor' or 'admin'. Unknown values coerced to 'other'."
+          enum: [student, parent, advisor, admin, other, null]
+        advisorTeacherNo:
+          type: string
+          nullable: true
+          description: |
+            **(v1.2+)** TeacherNo (รหัสครู) of the advisor responsible for this student. Resolved by SC from
+            AdvisorOverride config → Dashboard endpoint → CounsellorList. May be null if SC could not resolve.
+            konkui MUST use this (when present) to route the message to the correct advisor's Telegram/UI inbox.
+          example: "T64008"
+        advisorTeacherName:
+          type: string
+          nullable: true
+          description: |
+            **(v1.2+)** Display name of the advisor. Same source as `advisorTeacherNo`. Human-readable label
+            only — do NOT use for routing (names collide). Always prefer `advisorTeacherNo`.
+          example: "อ.สมศักดิ์ ใจดี"
 
     WebhookReplyInfo:
       type: object
@@ -158,10 +210,82 @@ components:
       properties:
         responseCode: { type: string, example: "200" }
         responseMesg: { type: string, example: "OK" }
+        accepted:
+          type: integer
+          nullable: true
+          description: "(v1.3+) Count of events fully processed."
+          example: 3
+        deduplicated:
+          type: integer
+          nullable: true
+          description: "(v1.3+) Count of events skipped due to dedup on `message.id`. Still success."
+          example: 0
+        failures:
+          type: array
+          nullable: true
+          description: |
+            (v1.3+) Per-event failures inside an otherwise-accepted batch. konkui SHOULD populate this
+            when ≥1 event failed but the batch was processed (e.g., unknown `advisorTeacherNo`, attachment
+            decode failure). SC logs each entry for ops triage. Empty/null → all events OK.
+          items: { $ref: "#/components/schemas/WebhookEventFailure" }
+
+    WebhookEventFailure:
+      type: object
+      required: [messageId, errorCode]
+      description: "(v1.3+) Per-event failure reported in a 200 response with partial success."
+      properties:
+        messageId:
+          type: string
+          description: "`message.id` of the failed event."
+          example: "sc-msg-1002-1"
+        errorCode:
+          type: string
+          description: "Machine-readable category. See `KonKuiErrorCode`."
+          example: "UNKNOWN_TEACHER"
+        errorMesg:
+          type: string
+          nullable: true
+          description: "Human-readable detail. No PII, no stack trace."
+          example: "advisorTeacherNo T99999 not in konkui directory"
 
     ErrorResponse:
       type: object
       required: [responseCode]
       properties:
-        responseCode: { type: string }
-        responseMesg: { type: string, nullable: true }
+        responseCode:
+          type: string
+          description: "Mirrors HTTP status as string."
+          example: "500"
+        errorCode:
+          type: string
+          nullable: true
+          description: |
+            (v1.3+) Machine-readable failure category. REQUIRED on every non-2xx response so SC can
+            alert/retry/route. See `KonKuiErrorCode` enum below.
+          example: "HMAC_INVALID"
+        responseMesg:
+          type: string
+          nullable: true
+          description: |
+            Human-readable detail for ops/devs. No PII (no student names, no advisor names, no chat_ids,
+            no exception stack traces). One sentence. Example: "dedup store timeout after 5s".
+
+    KonKuiErrorCode:
+      type: string
+      description: |
+        (v1.3+) Closed enum of error categories konkui MUST use in `errorCode`. Add new values as
+        additive minor version bumps. Unknown values from konkui → SC treats as `INTERNAL_ERROR`.
+      enum:
+        - HMAC_INVALID            # Signature mismatch or missing headers
+        - TIMESTAMP_SKEW          # X-Timestamp outside ±300s window
+        - REPLAY_DETECTED         # Same signature seen recently (if konkui implements replay cache)
+        - INVALID_JSON            # Body did not parse
+        - SCHEMA_VIOLATION        # Parsed but failed required-field / enum / type validation
+        - EMPTY_EVENTS            # events[] missing or zero-length
+        - UNSUPPORTED_EVENT_TYPE  # event.type unknown AND konkui chose to reject (default: ignore unknown)
+        - UNKNOWN_TEACHER         # advisorTeacherNo present but not in konkui directory
+        - ADVISOR_UNREACHABLE     # konkui knows teacher but cannot deliver (Telegram down, advisor offline, etc.)
+        - ATTACHMENT_DECODE       # base64Data invalid or decoded size > 25MB
+        - DEDUP_STORE_DOWN        # Cannot check duplicates — safer to 5xx than risk double-deliver
+        - INTERNAL_ERROR          # Unhandled exception; SC will alert ops
+        - SERVICE_UNAVAILABLE     # Planned maintenance / dependency outage

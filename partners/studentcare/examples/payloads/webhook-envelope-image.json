@@ -9,7 +9,9 @@
         "userId": "U1234abcd5678efgh9012ijkl3456mnop",
         "displayName": "นายสมชาย ใจดี",
         "stdNo": "67100001",
-        "senderRole": "parent"
+        "senderRole": "parent",
+        "advisorTeacherNo": "T64008",
+        "advisorTeacherName": "อ.สมศักดิ์ ใจดี"
       },
       "replyInfo": {
         "threadId": "SC-12345"

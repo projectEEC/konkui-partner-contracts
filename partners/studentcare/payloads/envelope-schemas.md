@@ -106,11 +106,13 @@ SC sends this to konkui when a student/parent sends a new message.
       "type": "message",                   // string, event type — "message" today
       "timestamp": 1747008300000,          // long, unix MILLISECONDS (legacy quirk)
       "source": {
-        "type": "user",                    // string
-        "userId": "lineUserId_xyz",        // string, external user identifier
-        "displayName": "นายสมชาย",          // string|null
-        "stdNo": "67100001",               // string, required
-        "senderRole": "student"            // string|null, "student"|"parent"|other → coerced to "other"
+        "type": "user",                          // string
+        "userId": "lineUserId_xyz",              // string, external user identifier
+        "displayName": "นายสมชาย",                // string|null
+        "stdNo": "67100001",                     // string, required
+        "senderRole": "student",                 // string|null, "student"|"parent"|"advisor"|"admin"|other → coerced to "other"
+        "advisorTeacherNo": "T64008",            // string|null (v1.2+) — TeacherNo of student's advisor; use this for routing
+        "advisorTeacherName": "อ.สมศักดิ์ ใจดี"     // string|null (v1.2+) — display label only; NEVER route by name
       },
       "replyInfo": {
         "threadId": "th_12345"             // string, required for inbound reply context
@@ -131,7 +133,47 @@ SC sends this to konkui when a student/parent sends a new message.
 Response from konkui:
 
 ```jsonc
-{ "responseCode": "200", "responseMesg": "OK" }
+{
+  "responseCode": "200",
+  "responseMesg": "OK",
+  "accepted": 3,                // (v1.3+) count fully processed
+  "deduplicated": 0,            // (v1.3+) count skipped due to dedup
+  "failures": []                // (v1.3+) per-event failures; empty = all OK
+}
+```
+
+**Partial success (v1.3+)** — batch processed, but ≥1 event failed:
+
+```jsonc
+{
+  "responseCode": "200",
+  "responseMesg": "OK with failures",
+  "accepted": 2,
+  "deduplicated": 0,
+  "failures": [
+    {
+      "messageId": "sc-msg-1002-1",
+      "errorCode": "UNKNOWN_TEACHER",
+      "errorMesg": "advisorTeacherNo T99999 not in konkui directory"
+    }
+  ]
+}
+```
+
+**Hard failure (v1.3+)** — konkui MUST return matching status. NEVER 200 on failure:
+
+```jsonc
+// 401 — HMAC fail
+{ "responseCode": "401", "errorCode": "HMAC_INVALID", "responseMesg": "signature mismatch" }
+
+// 400 — schema violation
+{ "responseCode": "400", "errorCode": "SCHEMA_VIOLATION", "responseMesg": "events[0].message.id missing" }
+
+// 500 — internal exception
+{ "responseCode": "500", "errorCode": "INTERNAL_ERROR", "responseMesg": "dedup store timeout after 5s" }
+
+// 503 — planned/dependency outage (set Retry-After header)
+{ "responseCode": "503", "errorCode": "SERVICE_UNAVAILABLE", "responseMesg": "scheduled maintenance" }
 ```
 
 Constraints:
@@ -156,3 +198,5 @@ Constraints:
 - Webhook envelope `timestamp` = **milliseconds**; `X-Timestamp` HMAC header = **seconds**. Don't confuse.
 - `senderRole` enum is open — konkui coerces unknown to `"other"` instead of rejecting. Future-friendly.
 - `attachments[].url` in `StudentCareMessage` may be relative; konkui resolves against `StudentCare:BaseUrl`.
+- `source.advisorTeacherNo` (v1.2+) is the **routing key** for advisor delivery. May be null if SC could not resolve advisor; konkui should fall back to `stdNo`-based lookup or quarantine the message for ops triage.
+- `source.advisorTeacherName` (v1.2+) is human display only. Names are not unique, may collide, and may have whitespace/honorific variations — **do not use for routing decisions**.

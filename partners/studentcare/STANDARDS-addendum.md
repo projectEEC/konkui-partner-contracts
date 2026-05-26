@@ -54,7 +54,7 @@ never a local konkui table mirroring SC state.
 ### Implications
 
 - konkui's role is **display only**: send identifiers, receive payloads, render.
-- Advisor page in konkui calls `GET /api/advisors/{externalUserId}/students` — SC returns roster + parent info for that teacher.
+- Advisor flow (**v1.3, advisor-keyed**): konkui calls `GET /api/chat/advisors/{teacherNo}/threads` (thread list) + `GET /api/chat/advisors/{teacherNo}/students/{stdNo}/messages` (messages). Admin cross-advisor view = `GET /api/chat/admin/threads`. Legacy `GET /api/advisors/{externalUserId}/students` roster + `GET /api/chat/threads` still exposed for back-compat. v1.3 also tightened parent-privacy on returned payloads.
 - Webhook routing inside konkui uses `stdNo` as the conversation key.
 - "konkui UI shows no data" troubleshooting: check SC response payload for that key (`stdNo` / `externalUserId`); empty → SC master data; konkui ignores non-empty payload → konkui rendering bug.
 
