@@ -1,0 +1,438 @@
+openapi: 3.0.3
+info:
+  title: StudentCare API (SC-side, v1)
+  description: |
+    Endpoints the StudentCare backend implements. Consumed by konkui's advisor module.
+
+    **Base URL:** `https://dsv.eeccollege.com/` (prod) / SC dev URL (test).
+
+    **Auth:** Every request carries `X-Api-Secret`. Inbound POST also carries `X-Timestamp` + `X-Signature` (HMAC with `InboundSecret`).
+
+    See `auth/hmac.md` + `auth/api-secret.md` for security details. See `STANDARDS.md` for non-negotiable rules.
+  version: "1.2.0"
+  contact:
+    name: Phanu (konkui)
+    email: eecprogrammer@gmail.com
+
+servers:
+  - url: https://dsv.eeccollege.com
+    description: Production
+  - url: https://dsv-dev.eeccollege.com
+    description: Development (SC team configures)
+
+security:
+  - apiSecret: []
+
+paths:
+  /api/advisors/{externalUserId}/students:
+    get:
+      operationId: listAdvisorStudents
+      summary: List students (with parent contacts) under an advisor
+      description: |
+        konkui sends the advisor's `externalUserId` (teacher code). SC resolves the
+        teacher↔student mapping from its master data and returns the student roster
+        for that advisor, each entry including parent contact info.
+
+        konkui is display-only — it does not maintain teacher↔student mapping
+        (see `STANDARDS.md` §11).
+      parameters:
+        - name: externalUserId
+          in: path
+          required: true
+          description: konkui's external user id of the advisor — matches a teacher code SC can resolve to a student roster.
+          schema: { type: string, example: "T67001" }
+        - name: academicYear
+          in: query
+          required: false
+          description: Buddhist academic year (e.g., `2568`). Omit = SC's current academic year.
+          schema: { type: string, example: "2568" }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: size
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdvisorStudentList" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Advisor not found (externalUserId does not resolve to any teacher in SC master data)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/chat/threads:
+    get:
+      operationId: listThreads
+      summary: List chat threads for a student
+      parameters:
+        - name: stdNo
+          in: query
+          required: true
+          description: Student number
+          schema: { type: string }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: size
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentCareThreadList" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/chat/threads/{threadId}/messages:
+    get:
+      operationId: listMessages
+      summary: List messages in a thread (optionally paginated by cursor)
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          description: |
+            Thread identifier in canonical string form `SC-{int}` (e.g., `SC-12345`).
+            Matches the value SC emits in outbound webhook `replyInfo.threadId` and the value konkui must echo in inbound POST.
+          schema:
+            type: string
+            pattern: "^SC-[0-9]+$"
+            example: "SC-12345"
+        - name: sinceMessageId
+          in: query
+          required: false
+          description: Return messages with id strictly greater than this. For incremental polling.
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentCareMessageList" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/chat/external/attachment/{attachmentId}:
+    get:
+      operationId: getAttachment
+      summary: Stream an attachment file as binary
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Binary file stream
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+            "*/*":
+              schema: { type: string, format: binary }
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="homework.pdf"' }
+            Content-Type:
+              schema: { type: string, example: "application/pdf" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /webhook/chat/inbound:
+    post:
+      operationId: sendInbound
+      summary: Receive an advisor reply from konkui
+      description: |
+        konkui posts an advisor's reply here. SC stores the message in the thread.
+
+        **Auth:** `X-Api-Secret` + HMAC headers (`X-Timestamp` + `X-Signature`) signed with `InboundSecret`.
+
+        **Idempotency:** Dedup on `externalMessageId`. SC SHOULD return 200 with the same `receivedMessageId` for duplicate requests.
+      security:
+        - apiSecret: []
+          hmacTimestamp: []
+          hmacSignature: []
+      parameters:
+        - name: X-Timestamp
+          in: header
+          required: true
+          schema: { type: string, example: "1747008300" }
+        - name: X-Signature
+          in: header
+          required: true
+          schema: { type: string, example: "a3f5..." }
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentCareInboundRequest" }
+      responses:
+        "200":
+          description: Message accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentCareInboundResponse" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Duplicate (same `externalMessageId` with different body)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "422":
+          description: Validation failed (e.g., attachment too large, > 5 attachments)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  securitySchemes:
+    apiSecret:
+      type: apiKey
+      in: header
+      name: X-Api-Secret
+      description: 64-char hex string. Shared secret. See `auth/api-secret.md`.
+    hmacTimestamp:
+      type: apiKey
+      in: header
+      name: X-Timestamp
+      description: Unix seconds. See `auth/hmac.md`.
+    hmacSignature:
+      type: apiKey
+      in: header
+      name: X-Signature
+      description: Lowercase hex HMAC-SHA256. See `auth/hmac.md`.
+
+  schemas:
+    AdvisorStudentList:
+      type: object
+      required: [advisor, students, page, size, total]
+      properties:
+        advisor:
+          $ref: "#/components/schemas/AdvisorInfo"
+        students:
+          type: array
+          items: { $ref: "#/components/schemas/AdvisorStudent" }
+        page: { type: integer, example: 1 }
+        size: { type: integer, example: 50 }
+        total: { type: integer, example: 32 }
+        academicYear:
+          type: string
+          nullable: true
+          example: "2568"
+          description: Buddhist academic year SC used to resolve the roster.
+
+    AdvisorInfo:
+      type: object
+      required: [externalUserId]
+      properties:
+        externalUserId:
+          type: string
+          example: "T67001"
+          description: Teacher code echoed back from request.
+        fullName: { type: string, nullable: true, example: "นายสมศักดิ์ ใจดี" }
+        department: { type: string, nullable: true, example: "สามัญ" }
+        title: { type: string, nullable: true, example: "ครูที่ปรึกษา ม.4/1" }
+
+    AdvisorStudent:
+      type: object
+      required: [stdNo]
+      properties:
+        stdNo: { type: string, example: "67100001" }
+        fullName: { type: string, nullable: true, example: "นายสมชาย ใจดี" }
+        nickname: { type: string, nullable: true, example: "ชาย" }
+        level: { type: string, nullable: true, example: "ม.4", description: "Grade level." }
+        classRoom: { type: string, nullable: true, example: "ม.4/1", description: "Class+room label as displayed." }
+        photoUrl:
+          type: string
+          nullable: true
+          description: Absolute or SC-relative URL to student photo. konkui may proxy or display directly.
+        status:
+          type: string
+          nullable: true
+          enum: [active, leave, dropped, graduated, transferred, other]
+          description: Student enrollment status as of `academicYear`. Unknown values coerced to `other`.
+        parents:
+          type: array
+          items: { $ref: "#/components/schemas/ParentContact" }
+
+    ParentContact:
+      type: object
+      required: [relation]
+      properties:
+        relation:
+          type: string
+          enum: [father, mother, guardian, other]
+          example: "mother"
+        fullName: { type: string, nullable: true, example: "นางสมศรี ใจดี" }
+        phone:
+          type: string
+          nullable: true
+          example: "0812345678"
+          description: E.164 or Thai 10-digit form. konkui treats as opaque string.
+        lineId: { type: string, nullable: true }
+        email: { type: string, nullable: true, format: email }
+        isPrimary:
+          type: boolean
+          nullable: true
+          description: If true, this contact is the default for advisor outreach. At most one parent per student SHOULD be marked primary.
+
+    StudentCareThreadList:
+      type: object
+      required: [threads, page, size, total]
+      properties:
+        threads:
+          type: array
+          items: { $ref: "#/components/schemas/StudentCareThread" }
+        page: { type: integer, example: 1 }
+        size: { type: integer, example: 20 }
+        total: { type: integer, example: 47 }
+
+    StudentCareThread:
+      type: object
+      required: [threadId, stdNo]
+      properties:
+        threadId:
+          type: string
+          pattern: "^SC-[0-9]+$"
+          example: "SC-12345"
+          description: "Canonical thread ID emitted by StudentCare in form `SC-{int}`."
+        stdNo: { type: string, example: "67100001" }
+        displayName: { type: string, nullable: true }
+        lastMessage: { type: string, nullable: true }
+        lastMessageAt: { type: string, format: date-time, nullable: true }
+        unreadCount: { type: integer, minimum: 0, example: 2 }
+
+    StudentCareMessageList:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/StudentCareMessage" }
+
+    StudentCareMessage:
+      type: object
+      required: [id, threadId, isFromTeacher, sentAt, attachments]
+      properties:
+        id: { type: integer, format: int64, example: 9001 }
+        threadId:
+          type: string
+          pattern: "^SC-[0-9]+$"
+          example: "SC-12345"
+          description: "Canonical thread ID emitted by StudentCare in form `SC-{int}`."
+        body: { type: string, nullable: true }
+        isFromTeacher: { type: boolean }
+        senderName: { type: string, nullable: true }
+        sentAt: { type: string, format: date-time }
+        attachments:
+          type: array
+          items: { $ref: "#/components/schemas/StudentCareAttachment" }
+
+    StudentCareAttachment:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer, format: int64 }
+        fileName: { type: string, nullable: true }
+        contentType: { type: string, nullable: true }
+        url:
+          type: string
+          nullable: true
+          description: Relative path to GET /api/chat/external/attachment/{id}
+
+    StudentCareInboundRequest:
+      type: object
+      required: [threadId]
+      properties:
+        externalMessageId:
+          type: string
+          nullable: true
+          description: konkui's stable ID for idempotency dedup. SHOULD be present.
+        threadId:
+          type: string
+          pattern: "^SC-[0-9]+$"
+          example: "SC-12345"
+          description: "Echo back the same `SC-{int}` value SC sent in outbound webhook `replyInfo.threadId`."
+        stdNo: { type: string, nullable: true }
+        advisorId: { type: string, nullable: true }
+        advisorName: { type: string, nullable: true }
+        body: { type: string, nullable: true }
+        attachments:
+          type: array
+          maxItems: 5
+          items: { $ref: "#/components/schemas/StudentCareInboundAttachment" }
+
+    StudentCareInboundAttachment:
+      type: object
+      required: [fileName, contentType, base64Data]
+      properties:
+        fileName: { type: string }
+        contentType: { type: string }
+        base64Data:
+          type: string
+          description: Base64-encoded file bytes. Decoded size MUST be ≤ 25 MB.
+
+    StudentCareInboundResponse:
+      type: object
+      required: [responseCode]
+      properties:
+        responseCode: { type: string, example: "200" }
+        responseMesg: { type: string, nullable: true }
+        receivedMessageId:
+          type: integer
+          format: int64
+          nullable: true
+          description: SC's assigned message ID after storage.
+
+    ErrorResponse:
+      type: object
+      required: [responseCode]
+      properties:
+        responseCode: { type: string, description: "HTTP status as string" }
+        responseMesg: { type: string, nullable: true, description: "Human-readable reason. No PII, no stack traces." }
+
+  responses:
+    Unauthorized:
+      description: HMAC or X-Api-Secret failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          example: { responseCode: "401", responseMesg: "signature mismatch" }
+    BadRequest:
+      description: Payload invalid
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          example: { responseCode: "400", responseMesg: "missing required field: threadId" }
+    NotFound:
+      description: Resource does not exist
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          example: { responseCode: "404", responseMesg: "thread not found" }

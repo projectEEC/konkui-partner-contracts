@@ -1,0 +1,23 @@
+{
+  "threads": [
+    {
+      "threadId": "SC-12345",
+      "stdNo": "67100001",
+      "displayName": "นายสมชาย ใจดี",
+      "lastMessage": "ขอบคุณค่ะ",
+      "lastMessageAt": "2026-05-11T13:45:00Z",
+      "unreadCount": 2
+    },
+    {
+      "threadId": "SC-12346",
+      "stdNo": "67100002",
+      "displayName": "นางสาวสมหญิง ดีจัง",
+      "lastMessage": null,
+      "lastMessageAt": null,
+      "unreadCount": 0
+    }
+  ],
+  "page": 1,
+  "size": 20,
+  "total": 47
+}

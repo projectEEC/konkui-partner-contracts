@@ -1,0 +1,26 @@
+{
+  "destination": "konkui",
+  "events": [
+    {
+      "type": "message",
+      "timestamp": 1747008400000,
+      "source": {
+        "type": "user",
+        "userId": "U1234abcd5678efgh9012ijkl3456mnop",
+        "displayName": "นายสมชาย ใจดี",
+        "stdNo": "67100001",
+        "senderRole": "parent"
+      },
+      "replyInfo": {
+        "threadId": "SC-12345"
+      },
+      "message": {
+        "id": "sc-msg-1002",
+        "type": "image",
+        "fileName": "photo.jpg",
+        "contentType": "image/jpeg",
+        "base64Data": "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A//Z"
+      }
+    }
+  ]
+}

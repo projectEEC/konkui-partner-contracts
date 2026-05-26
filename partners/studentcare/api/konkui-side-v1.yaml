@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: konkui Advisor Webhook (konkui-side, v1)
+  description: |
+    Webhook endpoint konkui exposes for the StudentCare backend to deliver inbound messages.
+
+    **Base URL:** `https://service.eeccollege.com` (prod) / `https://testservice.eeccollege.com` (dev).
+
+    **Auth:** HMAC headers (`X-Timestamp` + `X-Signature`) signed with `WebhookSecret`. No `X-Api-Secret` on this direction.
+
+    See `auth/hmac.md` for HMAC details. See `STANDARDS.md` for non-negotiable rules.
+  version: "1.0.0"
+  contact:
+    name: Phanu (konkui)
+    email: eecprogrammer@gmail.com
+
+servers:
+  - url: https://service.eeccollege.com
+    description: Production
+  - url: https://testservice.eeccollege.com
+    description: Development / integration test
+
+paths:
+  /webhooks/studentcare/webhook:
+    post:
+      operationId: receiveInboundEvent
+      summary: SC delivers a message event to konkui
+      description: |
+        Each call delivers one batch of events. konkui dedups on `message.id` for ≥ 24h.
+
+        **Retry policy (SC side):** On `5xx`, retry up to 3 times with exponential backoff. On `4xx`, do not retry.
+      security:
+        - hmacTimestamp: []
+          hmacSignature: []
+      parameters:
+        - name: X-Timestamp
+          in: header
+          required: true
+          schema: { type: string, example: "1747008300" }
+        - name: X-Signature
+          in: header
+          required: true
+          schema: { type: string, example: "a3f5..." }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentCareWebhookEnvelope" }
+      responses:
+        "200":
+          description: All events accepted (some may be dedup-skipped — still 200)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookAccepted" }
+        "400":
+          description: Invalid JSON, empty events array, or other payload error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: HMAC validation failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  securitySchemes:
+    hmacTimestamp:
+      type: apiKey
+      in: header
+      name: X-Timestamp
+    hmacSignature:
+      type: apiKey
+      in: header
+      name: X-Signature
+
+  schemas:
+    StudentCareWebhookEnvelope:
+      type: object
+      required: [destination, events]
+      properties:
+        destination:
+          type: string
+          example: "konkui"
+          description: Target system. Always "konkui" for this endpoint.
+        events:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/WebhookEvent" }
+
+    WebhookEvent:
+      type: object
+      required: [type, timestamp, source, replyInfo, message]
+      properties:
+        type:
+          type: string
+          example: "message"
+          description: Event type. Today only "message". New types are additive (consumer must ignore unknown).
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix milliseconds (legacy quirk — note this differs from `X-Timestamp` which is seconds).
+          example: 1747008300000
+        source: { $ref: "#/components/schemas/WebhookSource" }
+        replyInfo: { $ref: "#/components/schemas/WebhookReplyInfo" }
+        message: { $ref: "#/components/schemas/WebhookMessage" }
+
+    WebhookSource:
+      type: object
+      required: [type, userId, stdNo]
+      properties:
+        type: { type: string, example: "user" }
+        userId:
+          type: string
+          description: External user identifier (e.g., LINE userId).
+          example: "U1234abcd5678..."
+        displayName: { type: string, nullable: true }
+        stdNo:
+          type: string
+          example: "67100001"
+        senderRole:
+          type: string
+          nullable: true
+          description: "Allowed: 'student' or 'parent'. Unknown values coerced to 'other'."
+          enum: [student, parent, other, null]
+
+    WebhookReplyInfo:
+      type: object
+      required: [threadId]
+      properties:
+        threadId:
+          type: string
+          example: "th_12345"
+
+    WebhookMessage:
+      type: object
+      required: [id, type]
+      properties:
+        id:
+          type: string
+          description: Stable across retries. konkui dedups on this.
+          example: "sc-msg-1001"
+        type:
+          type: string
+          description: "Examples: 'text', 'image', 'file', 'sticker'. Additive enum."
+          example: "text"
+        text: { type: string, nullable: true }
+        fileName: { type: string, nullable: true }
+        contentType: { type: string, nullable: true }
+        base64Data:
+          type: string
+          nullable: true
+          description: Base64-encoded file bytes for non-text types. Decoded size MUST be ≤ 25 MB.
+
+    WebhookAccepted:
+      type: object
+      required: [responseCode]
+      properties:
+        responseCode: { type: string, example: "200" }
+        responseMesg: { type: string, example: "OK" }
+
+    ErrorResponse:
+      type: object
+      required: [responseCode]
+      properties:
+        responseCode: { type: string }
+        responseMesg: { type: string, nullable: true }

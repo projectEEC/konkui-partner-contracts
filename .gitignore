@@ -1,0 +1,21 @@
+# Secrets (never commit)
+.env
+.env.*
+**/secrets/
+**/credentials.json
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+node_modules/
+dist/
+build/

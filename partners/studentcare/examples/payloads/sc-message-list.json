@@ -1,0 +1,38 @@
+{
+  "messages": [
+    {
+      "id": 9001,
+      "threadId": "SC-12345",
+      "body": "สวัสดีค่ะอาจารย์",
+      "isFromTeacher": false,
+      "senderName": "นายสมชาย ใจดี",
+      "sentAt": "2026-05-11T13:45:00Z",
+      "attachments": []
+    },
+    {
+      "id": 9002,
+      "threadId": "SC-12345",
+      "body": "ส่งงานครับ",
+      "isFromTeacher": false,
+      "senderName": "นายสมชาย ใจดี",
+      "sentAt": "2026-05-11T13:46:30Z",
+      "attachments": [
+        {
+          "id": 7001,
+          "fileName": "homework.pdf",
+          "contentType": "application/pdf",
+          "url": "/api/chat/external/attachment/7001"
+        }
+      ]
+    },
+    {
+      "id": 9003,
+      "threadId": "SC-12345",
+      "body": "ได้รับแล้วค่ะ",
+      "isFromTeacher": true,
+      "senderName": "อ.สมหญิง ตรวจดี",
+      "sentAt": "2026-05-11T14:00:00Z",
+      "attachments": []
+    }
+  ]
+}

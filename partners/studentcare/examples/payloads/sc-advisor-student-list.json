@@ -1,0 +1,60 @@
+{
+  "advisor": {
+    "externalUserId": "T67001",
+    "fullName": "นายสมศักดิ์ ใจดี",
+    "department": "สามัญ",
+    "title": "ครูที่ปรึกษา ม.4/1"
+  },
+  "students": [
+    {
+      "stdNo": "67100001",
+      "fullName": "นายสมชาย ใจดี",
+      "nickname": "ชาย",
+      "level": "ม.4",
+      "classRoom": "ม.4/1",
+      "photoUrl": "https://dsv.eeccollege.com/photos/67100001.jpg",
+      "status": "active",
+      "parents": [
+        {
+          "relation": "father",
+          "fullName": "นายสมศักดิ์ ใจดี",
+          "phone": "0812345678",
+          "lineId": null,
+          "email": null,
+          "isPrimary": false
+        },
+        {
+          "relation": "mother",
+          "fullName": "นางสมศรี ใจดี",
+          "phone": "0898765432",
+          "lineId": "somsri.line",
+          "email": "somsri@example.com",
+          "isPrimary": true
+        }
+      ]
+    },
+    {
+      "stdNo": "67100002",
+      "fullName": "นางสาวสมหญิง ดีจัง",
+      "nickname": "หญิง",
+      "level": "ม.4",
+      "classRoom": "ม.4/1",
+      "photoUrl": null,
+      "status": "active",
+      "parents": [
+        {
+          "relation": "guardian",
+          "fullName": "นางป้าใจ ดีมาก",
+          "phone": "0876543210",
+          "lineId": null,
+          "email": null,
+          "isPrimary": true
+        }
+      ]
+    }
+  ],
+  "page": 1,
+  "size": 50,
+  "total": 32,
+  "academicYear": "2568"
+}

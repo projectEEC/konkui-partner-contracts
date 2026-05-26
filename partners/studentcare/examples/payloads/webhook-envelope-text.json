@@ -1,0 +1,24 @@
+{
+  "destination": "konkui",
+  "events": [
+    {
+      "type": "message",
+      "timestamp": 1747008300000,
+      "source": {
+        "type": "user",
+        "userId": "U1234abcd5678efgh9012ijkl3456mnop",
+        "displayName": "นายสมชาย ใจดี",
+        "stdNo": "67100001",
+        "senderRole": "student"
+      },
+      "replyInfo": {
+        "threadId": "SC-12345"
+      },
+      "message": {
+        "id": "sc-msg-1001",
+        "type": "text",
+        "text": "สวัสดีค่ะอาจารย์ ขอสอบถามเรื่องการบ้านครับ"
+      }
+    }
+  ]
+}

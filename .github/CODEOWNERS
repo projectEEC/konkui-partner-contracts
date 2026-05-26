@@ -1,0 +1,12 @@
+# Phanu owns the entire contract — all PRs require his approval.
+# Partner teams (SC, CA, future) can author PRs but cannot merge.
+
+* @phanuExe
+
+# Stricter ownership on shared, high-blast-radius surfaces (touched rarely).
+/STANDARDS.md       @phanuExe
+/envelope/          @phanuExe
+/conformance/       @phanuExe
+
+# Per-partner folders — Phanu still required; partner teams co-author their own folder.
+/partners/          @phanuExe

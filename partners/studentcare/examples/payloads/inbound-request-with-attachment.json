@@ -1,0 +1,15 @@
+{
+  "externalMessageId": "konkui-msg-2026-05-11-0002",
+  "threadId": "SC-12345",
+  "stdNo": "67100001",
+  "advisorId": "T001",
+  "advisorName": "อ.สมหญิง ตรวจดี",
+  "body": "แก้ไขตามนี้นะคะ",
+  "attachments": [
+    {
+      "fileName": "feedback.png",
+      "contentType": "image/png",
+      "base64Data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    }
+  ]
+}
