@@ -23,25 +23,26 @@ signs state-changing POST), `ApiSecret` (every konkui → CA call). See `auth/`.
 > (video); inlining base64 in a webhook is unworkable at that size. Metadata + fetch is
 > mandatory. No expiry (intrinsic to LINE's media size).
 
-## Ownership routing — prevents wrong-customer creation
+## What konkui needs (you design how)
 
-The OA is shared, so CA MUST forward to konkui **only** the events that belong to konkui.
+The OA is shared org-wide. These are konkui's **requirements** — the mechanism, routing
+rules, and API are CA's to design. konkui does not dictate CA's internal logic.
 
-| Event | Routing rule |
-|-------|--------------|
-| `follow` | **fan-out → konkui always** (konkui matches to a pending invite, then claims the user) |
-| `unfollow` | fan-out → konkui always (konkui marks `IsFollowingBot=false`) |
-| `message` | **only if `userId` is claimed by konkui** |
-| `postback` | only if `userId` is claimed by konkui |
+konkui needs:
 
-konkui registers ownership via the claim endpoint at the moment an invite is consumed.
-Unclaimed users (teachers, admins, random chatters) never reach konkui → the
-"wrong new customer" bug is fixed at the source. konkui then deletes its
-`LINE outbound-only / drop unknown` hack entirely.
+- A way to tell CA "this user is now konkui's" and later "release this user" (an
+  ownership / claim mechanism — the endpoint shape is yours).
+- Message / interaction events delivered **only** for users konkui owns.
+- **No profile or PII** (displayName, pictureUrl, …) for users konkui does **not** own —
+  avoid over-collection / PDPA exposure on a shared OA.
+- Whatever lifecycle signal CA can give so konkui can attach a follower to a pending
+  invite and then claim them. (Today konkui used `follow`; the exact signal is CA's call.)
+- Ownership that survives CA restarts and is **not** dropped on unfollow (a returning
+  customer keeps their owner); released only when konkui explicitly asks.
 
-- **Claim is durable** on CA (survives restart).
-- **Unfollow does NOT release** a claim — a returning customer keeps their owner.
-  Release happens only on explicit `DELETE .../claim` (contact hard-delete).
+Once CA can satisfy the above, konkui drops its `LINE outbound-only / drop unknown` hack —
+non-customers (teachers, admins, random chatters) no longer reach konkui, fixing the
+"wrong new customer" bug at the source. **How** CA achieves this is out of scope here.
 
 ## Domain error-code enum (CA returns; konkui maps to Thai UI)
 

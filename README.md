@@ -1,14 +1,21 @@
 # konkui partner contracts
 
-Single source of truth for how **partner platforms** integrate with konkui.
+How to connect a system to **konkui's agent**. Same idea as integrating with
+Meta / TikTok: they publish how you talk to them, and you build to it. This repo is
+konkui's version of that — published rules for talking to konkui, which you build to.
 
-konkui is a pure aggregator. Every partner platform that wants konkui to ingest its
-events and accept commands conforms to **one shared rulebook** + a **shared event
-envelope skeleton**, then declares only its platform-specific leaves in its own folder.
+konkui is a pure aggregator. It does **not** control how your platform is built. It
+defines only its own side and states what it needs from yours:
 
-This repo is that rulebook. A partner team reads it, implements to it, runs the
-conformance checks, and is certified to connect. konkui holds no partner-specific
-business hacks.
+| Surface | Who defines it |
+|---------|----------------|
+| **Webhook you push events INTO konkui** (envelope shape, auth, retry) | **konkui** — firm. It is konkui's endpoint; push events in this shape. |
+| **Shared rules** (auth formula, error shape, versioning) | **konkui** — firm. |
+| **The API konkui calls on your platform** (own/claim, profile, media, send, reply) | **you** — konkui states the *capabilities* it needs; you design the actual endpoints, methods, and shapes. konkui adapts to your design. |
+| **Your internal logic** (routing, when to enrich, follow/unfollow handling) | **you** — entirely yours. konkui never dictates it. |
+
+If your platform does not yet expose what konkui needs, this repo tells you **what** to
+build (not how). konkui holds no partner-specific business hacks.
 
 ## Layout
 
@@ -36,14 +43,14 @@ konkui-partner-contracts/
 
 ## Adding a new partner
 
-1. Copy `partners/_template/` (or an existing partner folder) to `partners/<name>/`.
+1. Copy an existing partner folder (e.g. `partners/studentcare/`) to `partners/<name>/`.
 2. Inherit `STANDARDS.md` and `envelope/skeleton.md` **as-is** — do not copy them.
 3. Fill in only what is platform-specific:
-   - `partners/<name>/STANDARDS-addendum.md` — media limits, scope / data-ownership, capability matrix.
-   - `partners/<name>/api/<name>-side-v1.yaml` — endpoints the partner exposes (command/data gateway).
-   - `partners/<name>/api/konkui-side-v1.yaml` — webhook konkui exposes (event-router target).
+   - `partners/<name>/STANDARDS-addendum.md` — media limits, scope / data-ownership, the capabilities konkui needs.
+   - `partners/<name>/api/konkui-side-v1.yaml` — **firm**: the webhook konkui exposes; you push events here in the envelope shape.
+   - `partners/<name>/api/<name>-side-v1.yaml` — **reference, non-binding**: an example shape of the API konkui calls. You design the real one; konkui adapts.
    - `partners/<name>/payloads/` — concrete envelope examples for this platform.
-4. Run `conformance/` against the partner's staging endpoints. Green = ready.
+4. Implement your side, then point konkui at your staging endpoints to verify end-to-end.
 5. Open a PR. Phanu (CODEOWNERS) reviews against `STANDARDS.md`.
 
 What stays shared (never duplicated into a partner folder): the auth formula, error

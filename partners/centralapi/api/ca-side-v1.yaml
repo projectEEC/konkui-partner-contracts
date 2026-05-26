@@ -1,9 +1,15 @@
 openapi: 3.0.3
 info:
-  title: Central API LINE Gateway (CA-side, v1)
+  title: Central API LINE Gateway (CA-side, v1) — REFERENCE DESIGN (non-binding)
   description: |
-    Data/Command Gateway endpoints CA exposes for konkui to act on the LINE OA
-    (claim ownership, profile, inbound content, outbound send, reply, quota).
+    ⚠️ REFERENCE / NON-BINDING. This is ONE example shape of the API konkui needs to
+    call. CA owns the real design — paths, methods, payloads are CA's to decide. konkui
+    adapts to whatever CA exposes, as long as the capabilities exist. The binding part is
+    the list of capabilities konkui needs (see STANDARDS-addendum.md "What konkui needs"),
+    not these exact endpoints.
+
+    Data/Command Gateway capabilities konkui needs (claim/ownership, profile, inbound
+    content, outbound send, reply, quota) — illustrated below as a concrete reference.
 
     **Base URL:** CA team provides (`https://buapi.eeccollege.com` + version path).
 
