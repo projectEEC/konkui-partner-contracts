@@ -77,6 +77,7 @@ Status semantics:
 | 403 | Forbidden — auth OK but not permitted | No |
 | 404 | Resource not found | No |
 | 409 | Conflict (e.g., duplicate idempotency key) | No |
+| 410 | Gone — resource expired / no longer available (e.g. media content) | No |
 | 422 | Validation failed — shape OK, business rule failed | No |
 | 429 | Rate limited | Yes, with `Retry-After` |
 | 5xx | Server error | Yes, exponential backoff |
