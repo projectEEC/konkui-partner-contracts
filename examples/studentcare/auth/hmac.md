@@ -114,6 +114,6 @@ Expected:
 - `canonical = "1747008300.{\"hello\":\"world\"}"`
 - `X-Signature = "4ef8d4d0692d704ca17a0cc4ebcbf6da6a05ea70b3d4c14f933013472cae6a1c"`
 
-Verified 2026-05-11 via `examples/curl/verify-hmac.sh` (OpenSSL HMAC-SHA256) and konkui's `HmacSha256Validator.ComputeSignatureHex`. Both produce identical output.
+Verified 2026-05-11 via `samples/curl/verify-hmac.sh` (OpenSSL HMAC-SHA256) and konkui's `HmacSha256Validator.ComputeSignatureHex`. Both produce identical output.
 
-Run `examples/curl/verify-hmac.sh` to validate your implementation produces a signature konkui accepts.
+Run `samples/curl/verify-hmac.sh` to validate your implementation produces a signature konkui accepts.

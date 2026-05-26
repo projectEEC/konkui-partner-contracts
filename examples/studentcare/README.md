@@ -33,7 +33,7 @@ SC's home inside the partner-contract monorepo (migrated from the standalone
 - `auth/` — `hmac.md`, `api-secret.md` (concrete secret names + flow).
 - `api/` — OpenAPI both directions.
 - `payloads/envelope-schemas.md` — flat narrative of every JSON shape on the wire.
-- `examples/curl/` + `examples/payloads/` — runnable requests + sample bodies.
+- `samples/curl/` + `samples/payloads/` — runnable requests + sample bodies.
 
 ## Inherits (do not duplicate)
 

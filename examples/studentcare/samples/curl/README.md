@@ -31,7 +31,7 @@ export INBOUND_SECRET="<from 1Password>"       # konkui → SC inbound signs wit
 chmod +x *.sh
 ./sc-list-advisor-students.sh T67001 2568
 ./sc-list-threads.sh 67100001
-./konkui-webhook.sh   # uses examples/payloads/webhook-envelope-text.json
+./konkui-webhook.sh   # uses samples/payloads/webhook-envelope-text.json
 ```
 
 ## Expectations
