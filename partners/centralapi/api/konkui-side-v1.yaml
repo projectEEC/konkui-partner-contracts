@@ -35,8 +35,8 @@ paths:
         Each call delivers one batch of events. konkui dedups on `message.id` (message
         events) / `webhookEventId` (non-message events) for ≥ 24h.
 
-        **Ownership routing (CA side):** forward `message`/`postback` only for konkui-claimed
-        userIds; `follow`/`unfollow` always. See partner addendum.
+        Which events CA chooses to send (filtering / ownership) is CA's design — not
+        specified here. konkui records whatever arrives in this shape.
 
         **Retry policy (CA side):** on `5xx`, retry up to 3 times with exponential backoff;
         on `4xx`, do not retry.
@@ -59,7 +59,7 @@ paths:
             schema: { $ref: "#/components/schemas/CentralWebhookEnvelope" }
       responses:
         "200":
-          description: All events accepted (some may be dedup-skipped or ownership-filtered — still 200)
+          description: All events accepted (some may be dedup-skipped — still 200)
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WebhookAccepted" }
@@ -106,7 +106,7 @@ components:
         type:
           type: string
           enum: [message, postback, follow, unfollow]
-          description: Consumer must ignore unknown (additive). message/postback require source claim; follow/unfollow always forwarded.
+          description: Consumer must ignore unknown (additive).
           example: "message"
         timestamp:
           type: integer

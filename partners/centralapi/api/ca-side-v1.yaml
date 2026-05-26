@@ -8,8 +8,8 @@ info:
     the list of capabilities konkui needs (see STANDARDS-addendum.md "What konkui needs"),
     not these exact endpoints.
 
-    Data/Command Gateway capabilities konkui needs (claim/ownership, profile, inbound
-    content, outbound send, reply, quota) — illustrated below as a concrete reference.
+    Data/Command Gateway capabilities konkui needs (profile, inbound content, outbound
+    send, reply, quota) — illustrated below as a concrete reference.
 
     **Base URL:** CA team provides (`https://buapi.eeccollege.com` + version path).
 
@@ -19,7 +19,7 @@ info:
     **Errors:** `{ responseCode, responseMesg }`; `responseMesg` uses the domain code enum
     in the partner addendum where applicable.
 
-    Organized by rollout priority. **P0 unblocks the profile + routing redesign.**
+    Organized by rollout priority. **P0 unblocks the profile fix + inbound content.**
   version: "1.0.0"
   contact:
     name: Phanu (konkui)
@@ -33,47 +33,9 @@ security:
   - apiSecret: []
 
 paths:
-  # ---------- P0: ownership + profile + inbound content ----------
-  /v1/line/users/{userId}/claim:
-    parameters:
-      - $ref: "#/components/parameters/UserId"
-    post:
-      operationId: claimUser
-      summary: "[P0] konkui claims a userId as its customer"
-      description: |
-        After this, CA routes that user's `message`/`postback` events to konkui.
-        Idempotent. Durable on CA (survives restart).
-      security:
-        - apiSecret: []
-          hmacTimestamp: []
-          hmacSignature: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/ClaimRequest" }
-      responses:
-        "200": { description: Claimed (or already claimed by konkui), content: { application/json: { schema: { $ref: "#/components/schemas/ClaimStatus" } } } }
-        "401": { $ref: "#/components/responses/Error" }
-        "409": { description: Claimed by a different owner, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
-    delete:
-      operationId: releaseClaim
-      summary: "[P0] Release ownership"
-      description: Called on contact hard-delete. Unfollow does NOT release — a returning customer keeps their owner.
-      security:
-        - apiSecret: []
-          hmacTimestamp: []
-          hmacSignature: []
-      responses:
-        "200": { description: Released (idempotent), content: { application/json: { schema: { $ref: "#/components/schemas/WebhookAccepted" } } } }
-        "401": { $ref: "#/components/responses/Error" }
-    get:
-      operationId: getClaimStatus
-      summary: "[P0] Check claim status (reconciliation)"
-      responses:
-        "200": { description: Status, content: { application/json: { schema: { $ref: "#/components/schemas/ClaimStatus" } } } }
-        "401": { $ref: "#/components/responses/Error" }
-
+  # ---------- P0: profile + inbound content ----------
+  # (How CA decides which conversations reach konkui — claim/ownership, if any — is CA's
+  #  design and is intentionally NOT modelled here.)
   /v1/line/users/{userId}/profile:
     parameters:
       - $ref: "#/components/parameters/UserId"
@@ -233,20 +195,6 @@ components:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
 
   schemas:
-    ClaimRequest:
-      type: object
-      required: [ownerSystem, claimedAt]
-      properties:
-        ownerSystem: { type: string, example: "konkui" }
-        claimedAt: { type: string, format: date-time, example: "2026-05-26T09:00:00Z" }
-
-    ClaimStatus:
-      type: object
-      required: [claimed]
-      properties:
-        claimed: { type: boolean, example: true }
-        ownerSystem: { type: string, nullable: true, example: "konkui" }
-
     Profile:
       type: object
       properties:

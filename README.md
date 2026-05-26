@@ -11,7 +11,7 @@ defines only its own side and states what it needs from yours:
 |---------|----------------|
 | **Webhook you push events INTO konkui** (envelope shape, auth, retry) | **konkui** — firm. It is konkui's endpoint; push events in this shape. |
 | **Shared rules** (auth formula, error shape, versioning) | **konkui** — firm. |
-| **The API konkui calls on your platform** (own/claim, profile, media, send, reply) | **you** — konkui states the *capabilities* it needs; you design the actual endpoints, methods, and shapes. konkui adapts to your design. |
+| **The API konkui calls on your platform** (profile, media, send, reply) | **you** — konkui states the *capabilities* it needs; you design the actual endpoints, methods, and shapes. konkui adapts to your design. |
 | **Your internal logic** (routing, when to enrich, follow/unfollow handling) | **you** — entirely yours. konkui never dictates it. |
 
 If your platform does not yet expose what konkui needs, this repo tells you **what** to
@@ -75,7 +75,7 @@ Change those once, here, and every partner inherits it.
 | Partner | State | Notes |
 |---------|-------|-------|
 | `studentcare` | live | already on the target pattern; this repo is its new home (migrated from `studentcare-konkui-contract`) |
-| `centralapi` | design → contract | replaces raw-LINE-passthrough; P0 = ownership + profile-enriched envelope + inbound content |
+| `centralapi` | design → contract | replaces raw-LINE-passthrough; P0 = profile-enriched envelope + inbound content |
 
 Design narrative for CA: see konkui state `plans/centralapi-konkui-redesign.md`.
 

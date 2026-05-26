@@ -14,8 +14,8 @@ konkui state `plans/centralapi-konkui-redesign.md`.
 
 | Role | Direction | What |
 |------|-----------|------|
-| **Event Router** | LINE → CA → konkui | Receive the single LINE webhook, verify signature, **enrich** (profile), filter by ownership, fan out the shared envelope to konkui |
-| **Data/Command Gateway** | konkui → CA → LINE | Expose LINE capabilities (claim, profile, content, send, reply, quota) as an API konkui calls; CA holds the channel token |
+| **Event Router** | LINE → CA → konkui | Receive the single LINE webhook, verify signature, **enrich** (profile), fan out the shared envelope to konkui. Which conversations to send = CA's design. |
+| **Data/Command Gateway** | konkui → CA → LINE | Expose LINE capabilities (profile, content, send, reply, quota) as an API konkui calls; CA holds the channel token |
 
 ## Topology
 
@@ -39,15 +39,14 @@ konkui state `plans/centralapi-konkui-redesign.md`.
 | Direction | Surface | Spec |
 |-----------|---------|------|
 | CA → konkui | webhook `POST /webhooks/central-api` (enriched envelope) | `api/konkui-side-v1.yaml` |
-| konkui → CA | Gateway `/v1/line/...` (claim, profile, content, send, reply, quota) | `api/ca-side-v1.yaml` |
+| konkui → CA | Gateway (profile, content, send, reply, quota) — **reference, CA designs the real API** | `api/ca-side-v1.yaml` |
 
 ## Files
 
-- `STANDARDS-addendum.md` — media (200 MB metadata + fetch), ownership-routing table, error-code enum, CA envelope leaves, event types.
+- `STANDARDS-addendum.md` — media (200 MB metadata + fetch), what konkui needs, error cases, CA envelope leaves, event types.
 - `auth/` — concrete secret names + cutover from the old `X-Api-Key`.
-- `api/` — OpenAPI both directions.
-- `payloads/envelope-schemas.md` — every JSON shape on the wire (envelope + gateway).
-- `examples/` — runnable requests + sample bodies.
+- `api/` — OpenAPI: `konkui-side` (firm webhook) + `ca-side` (reference, CA designs the real one).
+- `payloads/envelope-schemas.md` — every JSON shape on the wire (envelope + gateway reference).
 
 ## Inherits (do not duplicate)
 
@@ -58,7 +57,7 @@ konkui state `plans/centralapi-konkui-redesign.md`.
 
 | Tier | Scope | Status |
 |------|-------|--------|
-| **P0** | ownership claim + profile-enriched envelope + inbound content | unblocks the profile + routing fix |
+| **P0** | profile-enriched envelope + inbound content | unblocks the profile fix |
 | P1 | unified outbound send + reply-token | full parity with FB/IG |
 | P2 | typing indicator + quota | UX polish |
 | P3 | multicast / broadcast | defer until a real consumer |
@@ -66,4 +65,4 @@ konkui state `plans/centralapi-konkui-redesign.md`.
 ## Open decisions (confirm with CA team)
 
 See `plans/centralapi-konkui-redesign.md` §7: channel-token rotation, multi-OA,
-who-downloads-media, claim persistence, retry behavior, rate-limit tier, enrich latency.
+who-downloads-media, retry behavior, rate-limit tier, enrich latency.

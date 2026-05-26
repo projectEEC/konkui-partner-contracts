@@ -21,4 +21,5 @@ Format: shared changes under **Standard**, partner changes under **partners/<nam
 ### partners/centralapi
 - Authored from `centralapi-konkui-redesign.md`. Replaces raw-LINE passthrough.
   Envelope (`konkui-side-v1.yaml`), gateway P0–P3 (`ca-side-v1.yaml`), media waiver
-  (200 MB metadata+fetch), ownership-routing table, domain error enum, auth cutover.
+  (200 MB metadata+fetch), what-konkui-needs requirements, error cases, auth cutover.
+  Later reframed: konkui states needs only; partner designs its own API + routing/ownership.

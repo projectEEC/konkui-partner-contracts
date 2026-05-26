@@ -3,7 +3,8 @@
 Platform-specific rules for CA. Inherits everything in the root `STANDARDS.md` and
 `envelope/skeleton.md`. This file declares only what is CA-specific.
 
-CA fronts a **shared** LINE OA → ownership routing is mandatory (see below).
+CA fronts a **shared** LINE OA. How CA decides which conversations reach konkui is CA's
+design (see "What konkui needs" below).
 
 ## Auth cutover
 
@@ -43,9 +44,11 @@ To run the agent-side chat, konkui needs CA to expose (shape + method are yours)
 Whatever filtering decides which conversations reach konkui is CA's design. konkui then
 drops its `LINE outbound-only / drop unknown` hack.
 
-## Domain error-code enum (CA returns; konkui maps to Thai UI)
+## Error cases konkui needs to tell apart
 
-CA returns a stable `responseMesg` code so konkui shows friendly errors, not generic 500:
+konkui needs to distinguish these failures to show a useful message instead of a generic
+error. Provide a stable `responseMesg` code per case — the names below are a suggestion;
+your own naming is fine as long as it's stable:
 
 | Code | Meaning | konkui UI |
 |------|---------|-----------|
@@ -77,6 +80,6 @@ exist here, unlike SC.) Group/room sources are **not** forwarded — `source.typ
 
 ## Scope notes
 
-- CA owns: LINE channel token, the LINE webhook URL, profile enrichment, the claimed-user registry.
-- konkui owns: contact identity post-claim, conversation state, agent assignment, outbound file hosting.
+- CA owns: LINE channel token, the LINE webhook URL, and whatever it uses to decide which conversations reach konkui.
+- konkui owns: contact identity, conversation state, agent assignment, outbound file hosting.
 - No `file` outbound type — LINE push has no file message; files are inbound-only.

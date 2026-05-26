@@ -1,10 +1,9 @@
 # Inbound Event Envelope — Shared Skeleton
 
 Every partner pushes inbound events to konkui as **this** envelope. The top-level shape
-is identical across all partners so konkui has **one** webhook parser, **one** dedup
-model, and **one** ownership/routing model. Only the leaves (`source.*` enrichment and
-`message.*` subtypes) vary per platform, and each partner documents its leaves in
-`partners/<name>/payloads/`.
+is identical across all partners so konkui has **one** webhook parser and **one** dedup
+model. Only the leaves (`source.*` enrichment and `message.*` subtypes) vary per platform,
+and each partner documents its leaves in `partners/<name>/payloads/`.
 
 > This skeleton is the canonical target. A partner does **not** invent its own envelope
 > shape — it fills this one in. If a real field has nowhere to go here, that is a
@@ -62,19 +61,10 @@ model, and **one** ownership/routing model. Only the leaves (`source.*` enrichme
 | `source.*` beyond `userId/displayName/pictureUrl` | no | `payloads/` + addendum |
 | `message.type` subtypes + their fields | base set shared | `payloads/` |
 | media transport (inline base64 vs metadata + fetch) | no | addendum (+ STANDARDS §12 waiver) |
-| ownership / routing (which events reach konkui) | model shared | addendum |
 
-## Ownership / routing model (shared shape, partner fills the rules)
+## Which events reach konkui = the partner's design
 
-A partner that fronts a **shared** upstream channel (e.g. one LINE OA used org-wide)
-MUST only forward events that belong to konkui. The mechanism is shared:
-
-- konkui registers ownership of a `userId` via a partner **claim** endpoint at the
-  moment it takes over that user.
-- The partner forwards `message` / `postback` events **only** for claimed users.
-- Lifecycle events (`follow` / `unfollow`) are forwarded **always** (konkui matches them
-  to pending invites / updates follow state).
-
-The exact per-event routing table is partner-specific → addendum. A partner that fronts
-a **dedicated** upstream (not shared) may forward everything; it still documents that
-choice in its addendum.
+This skeleton defines the **shape** of events that arrive — not **which** events the
+partner chooses to send. Filtering, ownership, follow/unfollow handling, and how a partner
+decides a conversation belongs to konkui are entirely the partner's design. konkui parses
+and records whatever arrives in this shape; it does not dictate the partner's routing.

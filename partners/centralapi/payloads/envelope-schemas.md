@@ -56,9 +56,9 @@ endpoint on demand. (Deviation from SC's inline base64 — see addendum waiver.)
 
 Response from konkui: `{ "responseCode": "200", "responseMesg": "OK" }`.
 
-Routing: see addendum "Ownership routing". Dedup: `message.id` (message), `webhookEventId`
-(non-message). Batch: `events.length ≥ 1`; per-event failure logged + skipped, batch still
-200 if any event valid.
+Which events CA sends (filtering / ownership) is CA's design, not specified here. Dedup:
+`message.id` (message), `webhookEventId` (non-message). Batch: `events.length ≥ 1`;
+per-event failure logged + skipped, batch still 200 if any event valid.
 
 ## 2. konkui → CA Gateway `/v1/line/...`
 
@@ -66,12 +66,9 @@ All paths versioned `/v1`. All carry `X-Api-Secret`; state-changing POST also HM
 (`X-Signature`/`X-Timestamp`, `InboundSecret`). Errors → `{responseCode, responseMesg}`
 with the domain code enum (addendum).
 
-### P0 — ownership + profile + inbound content
+### P0 — profile + inbound content
 
 ```
-POST   /v1/line/users/{userId}/claim       body: { "ownerSystem": "konkui", "claimedAt": "ISO8601" }   idempotent
-DELETE /v1/line/users/{userId}/claim       release ownership (on contact hard-delete; NOT on unfollow)
-GET    /v1/line/users/{userId}/claim       → { "claimed": true, "ownerSystem": "konkui" }
 GET    /v1/line/users/{userId}/profile     → { "displayName", "pictureUrl", "statusMessage", "language" }
 GET    /v1/line/messages/{messageId}/content   → binary stream (Content-Type real, Content-Disposition set)
 ```
