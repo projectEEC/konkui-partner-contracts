@@ -17,6 +17,19 @@ defines only its own side and states what it needs from yours:
 If your platform does not yet expose what konkui needs, this repo tells you **what** to
 build (not how). konkui holds no partner-specific business hacks.
 
+## What you must hand back
+
+konkui does not care **how** you design your side — but you must **document** it so konkui
+can build against it. In your `partners/<name>/` folder, provide:
+
+- **Your API docs** — the real endpoints konkui calls (your design): `api/<name>-side-*.yaml`
+  or a link to your own published doc.
+- **Your concrete webhook payloads** — exactly what you push into konkui's webhook: which
+  event types, which message subtypes, your `source` fields — i.e. your concrete fill-in
+  of `envelope/skeleton.md`, in `payloads/`.
+
+No docs = no integration. konkui builds its module against these, not against guesses.
+
 ## Layout
 
 ```
