@@ -1,0 +1,33 @@
+name: contract conformance
+
+# Auto-lint partner OpenAPI specs against the firm rules in STANDARDS.md
+# (conformance/.spectral.yaml). Runs on every PR so a partner's proposed
+# design is checked before merge. Fails only on `error`-severity rules
+# (https-only, error-field spelling); warnings are advisory.
+
+on:
+  pull_request:
+    paths:
+      - "examples/**/api/*.yaml"
+      - "conformance/.spectral.yaml"
+      - "STANDARDS.md"
+  push:
+    branches: [main]
+    paths:
+      - "examples/**/api/*.yaml"
+      - "conformance/.spectral.yaml"
+
+jobs:
+  spectral:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Lint OpenAPI specs against STANDARDS
+        run: >
+          npx -y @stoplight/spectral-cli lint
+          "examples/**/api/*.yaml"
+          --ruleset conformance/.spectral.yaml
+          --fail-severity error
