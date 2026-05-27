@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How we coordinate on this contract (read first)
+    url: https://github.com/projectEEC/konkui-partner-contracts/blob/main/CONTRIBUTING.md
+    about: "Issues for questions/decisions, PRs to propose your implementation. Never post secrets."
