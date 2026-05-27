@@ -8,8 +8,8 @@ design (see "What konkui needs" below).
 
 ## Auth cutover
 
-The current single `X-Api-Key` (`eec-line-webhook-2026-...`) is **replaced** by the
-shared scheme: HMAC (`X-Signature` + `X-Timestamp`) + `X-Api-Secret`, per root §2. Hard
+The current single static `X-Api-Key` is **replaced** by the shared scheme: HMAC
+(`X-Signature` + `X-Timestamp`) + `X-Api-Secret`, per root §2. Hard
 cutover coordinated in one window — konkui accepts both until CA confirms HMAC live, then
 drops `X-Api-Key`. Secrets: `WebhookSecret` (CA signs webhook), `InboundSecret` (konkui
 signs state-changing POST), `ApiSecret` (every konkui → CA call). See `auth/`.
@@ -41,8 +41,7 @@ To run the agent-side chat, konkui needs CA to expose (shape + method are yours)
 - A way to send / reply messages + media back to that customer.
 - (nice-to-have) typing indicator, push quota.
 
-Whatever filtering decides which conversations reach konkui is CA's design. konkui then
-drops its `LINE outbound-only / drop unknown` hack.
+Whatever filtering decides which conversations reach konkui is CA's design.
 
 ## Error cases konkui needs to tell apart
 

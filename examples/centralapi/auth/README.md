@@ -14,8 +14,8 @@ only what is CA-specific.
 
 ## Cutover from legacy `X-Api-Key`
 
-The legacy integration used a single `X-Api-Key` (`eec-line-webhook-2026-...`). It is
-replaced by HMAC + `X-Api-Secret`.
+The legacy integration used a single static `X-Api-Key`. It is replaced by HMAC +
+`X-Api-Secret`.
 
 Hard cutover, coordinated in one window:
 

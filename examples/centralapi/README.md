@@ -6,9 +6,8 @@ channel (teachers, admins, chatbots, customers all on one OA), and LINE allows e
 webhook, so CA-as-intermediary is mandatory while we use one shared OA (fixed business
 requirement).
 
-Replaces the previous ad-hoc integration (raw LINE passthrough + `SendFlexMessage`-only
-outbound + konkui-side `LINE outbound-only / drop unknown` hack). Design narrative:
-konkui state `plans/centralapi-konkui-redesign.md`.
+Replaces the previous ad-hoc LINE integration with this normalized, standards-based
+contract.
 
 ## Two roles (cleanly separated)
 
@@ -62,5 +61,6 @@ konkui state `plans/centralapi-konkui-redesign.md`.
 
 ## Open decisions (confirm with CA team)
 
-See `plans/centralapi-konkui-redesign.md` §7: channel-token rotation, multi-OA,
-who-downloads-media, retry behavior, rate-limit tier, enrich latency.
+Items to confirm with the CA team: channel-token rotation, multi-OA support,
+who downloads inbound media (live-proxy vs store), webhook retry behavior,
+rate-limit tier + error codes, profile-enrich latency before forwarding.
