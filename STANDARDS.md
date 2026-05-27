@@ -59,13 +59,28 @@ All 4xx and 5xx responses:
 ```json
 {
   "responseCode": "401",
+  "errorCode": "HMAC_INVALID",
   "responseMesg": "human-readable reason"
 }
 ```
 
 - `responseCode` = HTTP status as string.
-- `responseMesg` = short reason. No stack traces. No internal paths.
+- `errorCode` = **machine-readable, stable** failure category. REQUIRED on every non-2xx. The
+  consumer alerts / retries / routes on it. `responseMesg` is for humans and MUST NOT be parsed.
+- `responseMesg` = short reason. No stack traces. No internal paths. No PII.
 - `responseMesg` (not `responseMessage`) — legacy spelling. Keep stable.
+
+**Never return a 2xx for a failed request.** A `200` / `201` means *accepted*. Auth, validation,
+and internal failures MUST use the proper 4xx/5xx + `errorCode` — wrapping an error in
+`{ "responseCode": "200", "responseMesg": "OK" }` hides it from the caller's retry/alert logic
+and is a contract violation. (The one exception is a *partial* failure inside an otherwise-accepted
+batch — see the konkui-side webhook response in `envelope/skeleton.md`: the batch is `200` with a
+populated `failures[]`.)
+
+The transport / auth / validation / internal base `errorCode` set is shared — defined in
+`envelope/skeleton.md`. Domain-specific codes (e.g. an unknown account, a blocked user) are
+partner-specific and declared in the partner's addendum. Unknown `errorCode` → consumer treats it
+as a generic internal error.
 
 Status semantics:
 
@@ -82,9 +97,9 @@ Status semantics:
 | 429 | Rate limited | Yes, with `Retry-After` |
 | 5xx | Server error | Yes, exponential backoff |
 
-Partners SHOULD also return a stable `responseMesg` code enum for domain errors so
-konkui can map to friendly UI text. The enum is partner-specific → declared in the
-partner's addendum.
+Domain errors (konkui → partner direction) carry their partner-specific `errorCode` so konkui
+can map to friendly UI text; that enum is declared in the partner's addendum (it extends the
+shared base set, it does not replace it).
 
 ## 5. Idempotency
 

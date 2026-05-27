@@ -37,6 +37,21 @@ paths:
 
         **Retry policy (CA side):** on `5xx`, retry up to 3 times with exponential backoff;
         on `4xx`, do not retry.
+
+        **Error reporting (MANDATORY — see `STANDARDS.md` §4 + `envelope/skeleton.md` rule 5):**
+        konkui MUST NOT return `200` when it failed to process the batch. A `200` tells CA
+        "stop retrying", so returning it on error silently drops events.
+
+        | Situation | HTTP | Body |
+        |---|---|---|
+        | All events accepted (incl. dedup) | `200` | `WebhookAccepted` |
+        | Some accepted, some failed | `200` | `WebhookAccepted` with `failures[]` populated |
+        | Invalid JSON / empty `events` / schema violation | `400` | `ErrorResponse` + `errorCode` |
+        | HMAC fail / timestamp skew / replay | `401` | `ErrorResponse` + `errorCode` |
+        | konkui internal error (DB / dedup store down, unhandled) | `5xx` | `ErrorResponse` + `errorCode` |
+
+        `responseMesg` is human-readable (no PII, no stack trace); `errorCode` is machine-readable
+        for CA's alerting / retry. Unknown failure → `INTERNAL_ERROR` + 500.
       security:
         - hmacTimestamp: []
           hmacSignature: []
@@ -56,17 +71,29 @@ paths:
             schema: { $ref: "#/components/schemas/CentralWebhookEnvelope" }
       responses:
         "200":
-          description: All events accepted (some may be dedup-skipped — still 200)
+          description: |
+            Batch accepted (some events may be dedup-skipped or individually failed — still 200,
+            with `failures[]` populated if any event failed).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WebhookAccepted" }
         "400":
-          description: Invalid JSON, empty events array, or other payload error
+          description: "Invalid JSON, empty events array, or schema violation. `errorCode` REQUIRED."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
         "401":
-          description: HMAC validation failed
+          description: "HMAC validation failed — bad signature, timestamp skew (>300s), or replay. `errorCode` REQUIRED."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "500":
+          description: "konkui internal error — DB / dedup store down, unhandled exception. CA retries. `errorCode` REQUIRED."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "503":
+          description: "konkui temporarily unavailable. CA retries. `errorCode` REQUIRED. Set `Retry-After` when possible."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
@@ -200,10 +227,73 @@ components:
       properties:
         responseCode: { type: string, example: "200" }
         responseMesg: { type: string, example: "OK" }
+        accepted:
+          type: integer
+          nullable: true
+          description: Count of events fully processed.
+          example: 3
+        deduplicated:
+          type: integer
+          nullable: true
+          description: Count of events skipped due to dedup. Still success.
+          example: 0
+        failures:
+          type: array
+          nullable: true
+          description: |
+            Per-event failures inside an otherwise-accepted batch. Populated when ≥1 event failed
+            but the batch was processed. Empty/null → all events OK. (Never use this to report a
+            whole-request failure — that is a non-2xx, see `ErrorResponse`.)
+          items: { $ref: "#/components/schemas/WebhookEventFailure" }
+
+    WebhookEventFailure:
+      type: object
+      required: [errorCode]
+      description: Per-event failure reported in a 200 response with partial success.
+      properties:
+        messageId:
+          type: string
+          nullable: true
+          description: "`message.id` (or `webhookEventId`) of the failed event."
+          example: "line-msg-123"
+        errorCode:
+          type: string
+          description: "Machine-readable category. See `KonKuiErrorCode`."
+          example: "SCHEMA_VIOLATION"
+        errorMesg:
+          type: string
+          nullable: true
+          description: Human-readable detail. No PII, no stack trace.
 
     ErrorResponse:
       type: object
-      required: [responseCode]
+      required: [responseCode, errorCode]
       properties:
-        responseCode: { type: string }
-        responseMesg: { type: string, nullable: true }
+        responseCode:
+          type: string
+          description: Mirrors HTTP status as string.
+          example: "401"
+        errorCode:
+          $ref: "#/components/schemas/KonKuiErrorCode"
+        responseMesg:
+          type: string
+          nullable: true
+          description: Human-readable detail for ops/devs. No PII, no stack trace. One sentence.
+
+    KonKuiErrorCode:
+      type: string
+      description: |
+        Shared base set of konkui-side webhook error categories (per `envelope/skeleton.md` →
+        "Base errorCode set"). REQUIRED on every non-2xx. Add new values as additive minor bumps.
+        Unknown value → CA treats as `INTERNAL_ERROR`.
+      enum:
+        - HMAC_INVALID            # signature mismatch / missing headers
+        - TIMESTAMP_SKEW          # X-Timestamp outside ±300s
+        - REPLAY_DETECTED         # signature seen recently
+        - INVALID_JSON            # body did not parse
+        - SCHEMA_VIOLATION        # parsed but failed required-field / type / enum
+        - EMPTY_EVENTS            # events[] missing or zero-length
+        - UNSUPPORTED_EVENT_TYPE  # unknown type AND konkui chose to reject (default: ignore)
+        - DEDUP_STORE_DOWN        # cannot check duplicates — safer to 5xx than double-deliver
+        - INTERNAL_ERROR          # unhandled exception
+        - SERVICE_UNAVAILABLE     # planned maintenance / dependency outage

@@ -91,3 +91,18 @@ else can go live without this.
 Then confirm: channel-token rotation, multi-OA support, who downloads inbound media
 (live-proxy vs store), webhook retry behavior, rate-limit tier + error codes, profile-enrich
 latency before forwarding.
+
+And these (surfaced in design review — each needs a decision before the matching feature ships):
+
+- **Ownership revocation/notification** — when CA reassigns a user away from konkui (a teacher takes
+  over, the user is re-routed), how does konkui learn so it stops sending? The current event set
+  (`message`/`postback`/`follow`/`unfollow`) has no "released" signal. Part of the establishment
+  design (see addendum → "Conversation establishment", rule 5).
+- **Profile-enrich failure path** — if LINE `GET /profile` fails (non-follower / blocked), does CA
+  forward the event with `displayName`/`pictureUrl` null, drop it, or retry? (Happy path is
+  specified; this failure path is not.)
+- **Outbound media URL lifetime + privacy** — konkui-hosted media URLs are publicly fetchable so
+  LINE can pull them. How long must they stay live, and are they unguessable/expiring? (We won't
+  relay indefinitely-public customer PII without an agreed expiry.)
+- **Dual-auth cutover precedence** — during the `X-Api-Key` → HMAC transition, if both headers
+  arrive, which wins; and once `X-Api-Key` is dropped, what is the reject status + `errorCode`?

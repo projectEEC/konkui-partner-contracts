@@ -116,7 +116,11 @@ components:
         destination:
           type: string
           example: "konkui"
-          description: Target system. Always "konkui" for this endpoint.
+          description: |
+            Source channel / instance identifier (per `envelope/skeleton.md`). SC is a single
+            dedicated backend routed by this endpoint's path, so the value is informational — SC
+            currently sends the constant "konkui" (a degenerate source id); konkui does not route
+            on it for SC.
         events:
           type: array
           minItems: 1

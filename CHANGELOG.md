@@ -6,6 +6,17 @@ Format: shared changes under **Standard**, example changes under **examples/<nam
 ## [Unreleased]
 
 ### Standard
+- **Uniform konkui-side webhook response contract (hoisted from the studentcare example).**
+  `STANDARDS.md` §4 now requires a machine-readable `errorCode` on every non-2xx and forbids
+  returning `2xx` for a failed request. `envelope/skeleton.md` rule 5 spells out the
+  success / partial (`failures[]`) / whole-request-failure cases, and adds a shared base
+  `errorCode` set so every partner parses konkui's failures the same way. Fixes a divergence
+  where the studentcare example mandated never-200 + an error enum while centralapi + the
+  skeleton still permitted 200-on-error.
+- **Clarified `destination`** in `envelope/skeleton.md` — it is the *source* channel / instance
+  id konkui routes on, not the literal target "konkui".
+- **Blessed optional event-level leaves** (e.g. `replyToken`, `replyInfo`/`threadId`) in the
+  skeleton's "what a partner extends" table — they were already used in examples but had no slot.
 - Initial monorepo extraction. Root `STANDARDS.md` + `envelope/skeleton.md` promoted as
   the neutral rulebook, genericized from the first integration (auth, payload, error,
   idempotency, versioning, SLA, logging, forbidden, waiver).
@@ -28,3 +39,9 @@ Format: shared changes under **Standard**, example changes under **examples/<nam
   Firm webhook (`konkui-side-v1.yaml`) + reference API (`ca-side-v1.yaml`, non-binding),
   media waiver (200 MB metadata+fetch), what-konkui-needs requirements, error cases,
   auth cutover. The integrating system designs its own API + routing/ownership.
+- Brought `konkui-side-v1.yaml` up to the uniform response contract: `errorCode` +
+  `KonKuiErrorCode` base enum, `failures[]` / `accepted` / `deduplicated`, `500`/`503`
+  responses, explicit never-200-on-error rule.
+- Added open decisions surfaced in design review (ownership revocation, profile-enrich
+  failure path, outbound media URL lifetime/privacy, dual-auth cutover precedence) +
+  establishment rule 5 (CA notifies konkui on involuntary release).

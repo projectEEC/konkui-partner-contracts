@@ -65,6 +65,10 @@ mechanism such that:
    the relationship — so your routing has an authoritative source of "this user is konkui's".
 4. `follow` / `unfollow` may always fan out to konkui (per `envelope/skeleton.md`); it is the
    rule-2 `message` / `postback` routing that depends on establishment.
+5. When **CA** ends konkui's ownership of a user (a teacher takes over, the user is reassigned,
+   an admin closes it) — i.e. a release konkui did **not** initiate — konkui must be **notified**
+   so it stops sending to that user. Define how (a `released` event, a callback, etc.); without
+   it konkui keeps talking to a user you've reassigned.
 
 **You design the mechanism** — a `connect` / `claim` call konkui makes, a routing table keyed
 on your own entry-point attribution, an invite-token exchange, etc. — as long as it satisfies
