@@ -1,9 +1,30 @@
 # Partner: StudentCare (SC)
 
 SC proxies the **StudentCare backend** (student/parent/teacher messaging) to konkui.
-Dedicated upstream — not a shared channel. Already on the target pattern; this folder is
-SC's home inside the partner-contract monorepo (migrated from the standalone
-`studentcare-konkui-contract` repo, no wire change).
+Dedicated upstream — not a shared channel. This folder is SC's home inside the
+partner-contract monorepo (migrated from the standalone `studentcare-konkui-contract`
+repo, no wire change). SC's existing integration already matches this contract, so it
+served as the reference the baseline was drawn from.
+
+## The integration model (think Meta / TikTok)
+
+This contract is a **shared development guideline**, not a top-down mandate — it exists so
+our two systems interoperate, and it evolves by agreement (PRs), not decree.
+
+The shape is the same one konkui uses with Facebook, Instagram, or TikTok: **you are the
+platform; konkui is the app.** konkui hosts a webhook you deliver to, calls your API to act,
+and reads your spec — it does not reach into your internals, and your data does not flow into
+konkui. You own the customers (students/parents/teachers) and the API surface; you design it.
+
+The **only** parts konkui keeps firm across every platform are the wire baseline
+(`../../STANDARDS.md`) + the webhook envelope (`../../envelope/skeleton.md`) — kept minimal on
+purpose, so konkui's aggregator has one parser. Everything about *your* API (`api/sc-side-v1.yaml`
+is what we have today, and it changes with your system) is yours. Unlike CA, SC is a dedicated
+channel, so there's **no shared-OA establishment / ownership handshake** — every event on the
+upstream is already SC's, routed to konkui directly.
+
+Coordinate changes here: anything that touches the wire → open a PR so konkui can keep its
+parser in sync; we agree before it ships. See root `CONTRIBUTING.md`.
 
 ## Topology
 
