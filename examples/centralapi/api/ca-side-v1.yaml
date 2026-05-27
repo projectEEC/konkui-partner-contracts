@@ -16,8 +16,9 @@ info:
     **Auth:** every call carries `X-Api-Secret`. State-changing POST also carries HMAC
     (`X-Timestamp` + `X-Signature`) signed with `InboundSecret`. See `../../../STANDARDS.md` §2.
 
-    **Errors:** `{ responseCode, responseMesg }`; `responseMesg` uses the domain code enum
-    in the partner addendum where applicable.
+    **Errors:** `{ responseCode, errorCode, responseMesg }` (STANDARDS §4). `errorCode` is the
+    machine-readable code — domain codes (`INVALID_USER`, `BLOCKED_BY_USER`, …) extend the shared
+    base set; see the partner addendum. `responseMesg` is human-readable only.
 
     Organized by rollout priority. **P0 unblocks the profile fix + inbound content.**
   version: "1.0.0"
@@ -257,10 +258,16 @@ components:
 
     ErrorResponse:
       type: object
-      required: [responseCode]
+      required: [responseCode, errorCode]
       properties:
-        responseCode: { type: string }
+        responseCode: { type: string, example: "404" }
+        errorCode:
+          type: string
+          description: |
+            Machine-readable code (STANDARDS §4). CA's domain codes extend the shared base set:
+            INVALID_USER | BLOCKED_BY_USER | QUOTA_EXCEEDED | REPLY_TOKEN_EXPIRED | CONTENT_EXPIRED
+          example: "INVALID_USER"
         responseMesg:
           type: string
           nullable: true
-          description: "Domain code where applicable: INVALID_USER | BLOCKED_BY_USER | QUOTA_EXCEEDED | REPLY_TOKEN_EXPIRED | CONTENT_EXPIRED"
+          description: Human-readable detail only. No PII, no stack trace.

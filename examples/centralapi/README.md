@@ -88,6 +88,20 @@ on the shared OA becomes a konkui conversation, and how konkui signals/releases 
 its events route correctly (see `STANDARDS-addendum.md` → "Conversation establishment"). Nothing
 else can go live without this.
 
+**Second, the inbound-delivery shape — your call:** konkui's aggregator consumes the
+[envelope](../../envelope/skeleton.md). The open question is **who maps LINE → that envelope and
+enriches the profile**:
+
+- **(a) CA maps + enriches before forwarding** — CA already holds the raw LINE objects + the
+  channel token, so this is the natural fit; konkui receives a clean envelope. *(what the addendum
+  illustrates today)*, or
+- **(b) CA forwards raw LINE; konkui maps it at ingest** — less work for CA.
+
+Pick whichever is easier for CA — konkui supports both (its receiver can accept either during
+the transition). One thing is fixed regardless: anything needing the LINE token (profile refresh,
+media bytes) comes from **CA's gateway**, because konkui has no direct LINE access. So "(b)" still
+relies on CA's gateway for profile/media; it only moves the JSON-reshaping to konkui's side.
+
 Then confirm: channel-token rotation, multi-OA support, who downloads inbound media
 (live-proxy vs store), webhook retry behavior, rate-limit tier + error codes, profile-enrich
 latency before forwarding.

@@ -20,9 +20,10 @@ signs state-changing POST), `ApiSecret` (every konkui → CA call). See `auth/`.
 - konkui downloads bytes via `GET /v1/line/messages/{messageId}/content` when an agent opens the conversation.
 - Outbound media: konkui hosts files on its own public host and passes HTTPS URLs (`https://{konkui-media-host}/files/...`); CA relays the URL to LINE. These URLs are **publicly fetchable over HTTPS without auth** — LINE's servers fetch `originalContentUrl` / `previewImageUrl` directly, so they must not require a token.
 
-> Waiver: root contract / SC inline base64. CA cannot — LINE media is up to **200 MB**
-> (video); inlining base64 in a webhook is unworkable at that size. Metadata + fetch is
-> mandatory. No expiry (intrinsic to LINE's media size).
+> Waiver vs root contract / SC inline base64: CA cannot inline — LINE media is up to **200 MB**
+> (video), unworkable as base64 in a webhook. Metadata + fetch is mandatory. This is a **standing
+> waiver (no review expiry)** — LINE's media size is intrinsic, not a temporary constraint. (Note:
+> the fetched *content* can still expire on LINE's side → the `CONTENT_EXPIRED` error case below.)
 
 ## What konkui needs (you design how)
 
@@ -72,7 +73,7 @@ mechanism such that:
 
 **You design the mechanism** — a `connect` / `claim` call konkui makes, a routing table keyed
 on your own entry-point attribution, an invite-token exchange, etc. — as long as it satisfies
-rules 1–4. Add it to your `api/` spec so konkui can implement against it. (A claim-style call
+rules 1–5. Add it to your `api/` spec so konkui can implement against it. (A claim-style call
 is the obvious shape; it was left out of the reference `api/ca-side-v1.yaml` precisely because
 the choice is yours.)
 
@@ -88,10 +89,11 @@ unless your routing says so.
 ## Error cases konkui needs to tell apart
 
 konkui needs to distinguish these failures to show a useful message instead of a generic
-error. Provide a stable `responseMesg` code per case — the names below are a suggestion;
-your own naming is fine as long as it's stable:
+error. Return a stable `errorCode` per case (these are CA's **domain** codes — they extend the
+shared base set in `STANDARDS.md` §4 / `envelope/skeleton.md`, they don't replace it). The names
+below are a suggestion; your own naming is fine as long as it's stable:
 
-| Code | Meaning | konkui UI |
+| `errorCode` | Meaning | konkui UI |
 |------|---------|-----------|
 | `INVALID_USER` | userId not found / not a follower | "ลูกค้าไม่ได้เป็นเพื่อนกับ OA" |
 | `BLOCKED_BY_USER` | user blocked the OA | "ลูกค้าบล็อก OA แล้ว" |
@@ -104,8 +106,10 @@ your own naming is fine as long as it's stable:
 Concrete shapes in `payloads/envelope-schemas.md`. CA-specific notes:
 
 - `destination` = OA identifier (`"line-oa-main"`). Future multi-OA: this is the `oaKey`.
-- `source.userId` = LINE userId (`U....`). `displayName` + `pictureUrl` **CA enriches**
-  via LINE `GET /profile` before forwarding. `statusMessage` / `language` optional enrich.
+- `source.userId` = LINE userId (`U....`). `displayName` + `pictureUrl` come from LINE
+  `GET /profile`; **who fills them depends on the inbound-delivery decision** (README "Open
+  decisions" → the inbound-delivery shape): in option (a) CA enriches before forwarding; in
+  option (b) konkui pulls them from CA's gateway after ingest. `statusMessage` / `language` optional.
 - `replyToken` (string|null) — on `message` / `postback` only, ~1 min validity.
 - `webhookEventId` — LINE's event id; dedup key for non-message events.
 - `message.id` — LINE message id; dedup key for message events; CA MUST keep stable across retries.

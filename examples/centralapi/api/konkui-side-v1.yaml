@@ -167,12 +167,14 @@ components:
         displayName:
           type: string
           nullable: true
-          description: CA enriches via LINE GET /profile before forwarding.
+          description: |
+            From LINE GET /profile. Populated by CA here in delivery option (a); null in option (b)
+            (konkui fetches it from CA's gateway after ingest). See README "Open decisions".
           example: "สมชาย ใจดี"
         pictureUrl:
           type: string
           nullable: true
-          description: CA enriches.
+          description: Same as displayName — populated by CA in option (a), else null.
           example: "https://profile.line-scdn.net/..."
         statusMessage: { type: string, nullable: true }
         language: { type: string, nullable: true, example: "th" }
