@@ -18,7 +18,7 @@ signs state-changing POST), `ApiSecret` (every konkui → CA call). See `auth/`.
 
 - The webhook envelope carries media **metadata + `message.id`** but **no binary**.
 - konkui downloads bytes via `GET /v1/line/messages/{messageId}/content` when an agent opens the conversation.
-- Outbound media: konkui hosts files on its public host (`service.eeccollege.com/files/...`, NAS-backed) and passes HTTPS URLs; CA relays the URL to LINE.
+- Outbound media: konkui hosts files on its own public host and passes HTTPS URLs (`https://{konkui-media-host}/files/...`); CA relays the URL to LINE.
 
 > Waiver: root contract / SC inline base64. CA cannot — LINE media is up to **200 MB**
 > (video); inlining base64 in a webhook is unworkable at that size. Metadata + fetch is

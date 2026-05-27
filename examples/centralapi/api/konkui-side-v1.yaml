@@ -5,7 +5,7 @@ info:
     Webhook endpoint konkui exposes for Central API (CA) to deliver inbound LINE events
     as the enriched, normalized envelope.
 
-    **Base URL:** `https://service.eeccollege.com` (prod) / `https://testservice.eeccollege.com` (dev).
+    **Base URL:** konkui provides the prod/dev base URLs out-of-band at integration time.
 
     **Path:** `/webhooks/central-api` — unchanged from the legacy raw-passthrough
     integration. Only the body shape changes.
@@ -18,13 +18,10 @@ info:
   version: "1.0.0"
   contact:
     name: Phanu (konkui)
-    email: eecprogrammer@gmail.com
 
 servers:
-  - url: https://service.eeccollege.com
-    description: Production
-  - url: https://testservice.eeccollege.com
-    description: Development / integration test
+  - url: https://konkui.example
+    description: Placeholder — konkui provides the real prod/dev base URLs out-of-band
 
 paths:
   /webhooks/central-api:

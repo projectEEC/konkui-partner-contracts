@@ -5,9 +5,10 @@ Runnable scripts to exercise the contract end-to-end.
 ## Setup
 
 ```bash
-# Load secrets from your local env (do NOT commit these)
-export SC_BASE_URL="https://dsv.eeccollege.com"
-export KONKUI_BASE_URL="https://testservice.eeccollege.com"
+# Load secrets + base URLs from your local env (do NOT commit these).
+# Real prod/dev base URLs are exchanged out-of-band between the teams.
+export SC_BASE_URL="https://studentcare.example"
+export KONKUI_BASE_URL="https://konkui.example"
 export API_SECRET="<from 1Password>"
 export WEBHOOK_SECRET="<from 1Password>"      # SC → konkui signs with this
 export INBOUND_SECRET="<from 1Password>"       # konkui → SC inbound signs with this

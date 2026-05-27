@@ -11,7 +11,7 @@ info:
     Data/Command Gateway capabilities konkui needs (profile, inbound content, outbound
     send, reply, quota) — illustrated below as a concrete reference.
 
-    **Base URL:** CA team provides (`https://buapi.eeccollege.com` + version path).
+    **Base URL:** CA team provides their base URL + version path out-of-band.
 
     **Auth:** every call carries `X-Api-Secret`. State-changing POST also carries HMAC
     (`X-Timestamp` + `X-Signature`) signed with `InboundSecret`. See `../../../STANDARDS.md` §2.
@@ -23,11 +23,10 @@ info:
   version: "1.0.0"
   contact:
     name: Phanu (konkui)
-    email: eecprogrammer@gmail.com
 
 servers:
-  - url: https://buapi.eeccollege.com
-    description: Production (CA confirms exact base + version path)
+  - url: https://ca.example
+    description: Placeholder — CA provides the real base + version path out-of-band
 
 security:
   - apiSecret: []
@@ -229,7 +228,7 @@ components:
       description: |
         Discriminated by `type`. Allowed: text, image, video, audio, sticker, location, flex.
         No outbound `file` — LINE push has none. Media URLs are konkui-hosted HTTPS
-        (`service.eeccollege.com/files/...`); CA relays to LINE.
+        (`https://{konkui-media-host}/files/...`); CA relays the URL to LINE.
       required: [type]
       properties:
         type:

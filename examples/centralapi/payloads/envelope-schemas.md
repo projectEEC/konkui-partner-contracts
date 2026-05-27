@@ -87,8 +87,8 @@ POST /v1/line/reply                      body: { "replyToken": "...", "messages"
 
 ```jsonc
 { "type": "text",     "text": "สวัสดีครับ" }
-{ "type": "image",    "originalContentUrl": "https://service.eeccollege.com/files/abc.jpg",
-                      "previewImageUrl": "https://service.eeccollege.com/files/abc_preview.jpg" }
+{ "type": "image",    "originalContentUrl": "https://media.konkui.example/files/abc.jpg",
+                      "previewImageUrl": "https://media.konkui.example/files/abc_preview.jpg" }
 { "type": "video",    "originalContentUrl": "...", "previewImageUrl": "...", "trackingId": null }
 { "type": "audio",    "originalContentUrl": "...", "duration": 5000 }
 { "type": "sticker",  "packageId": "11537", "stickerId": "52002745" }

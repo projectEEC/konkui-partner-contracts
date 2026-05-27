@@ -2,9 +2,9 @@ openapi: 3.0.3
 info:
   title: StudentCare API (SC-side, v1)
   description: |
-    Endpoints the StudentCare backend implements. Consumed by konkui's advisor module.
+    Endpoints the StudentCare backend implements. Consumed by konkui.
 
-    **Base URL:** `https://dsv.eeccollege.com/` (prod) / SC dev URL (test).
+    **Base URL:** SC team provides their prod/dev base URLs out-of-band.
 
     **Auth:** Every request carries `X-Api-Secret`. Inbound POST also carries `X-Timestamp` + `X-Signature` (HMAC with `InboundSecret`).
 
@@ -12,13 +12,10 @@ info:
   version: "1.3.0"
   contact:
     name: Phanu (konkui)
-    email: eecprogrammer@gmail.com
 
 servers:
-  - url: https://dsv.eeccollege.com
-    description: Production
-  - url: https://dsv-dev.eeccollege.com
-    description: Development (SC team configures)
+  - url: https://studentcare.example
+    description: Placeholder — SC provides the real prod/dev base URLs out-of-band
 
 security:
   - apiSecret: []

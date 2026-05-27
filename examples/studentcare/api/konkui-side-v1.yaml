@@ -4,7 +4,7 @@ info:
   description: |
     Webhook endpoint konkui exposes for the StudentCare backend to deliver inbound messages.
 
-    **Base URL:** `https://service.eeccollege.com` (prod) / `https://testservice.eeccollege.com` (dev).
+    **Base URL:** konkui provides the prod/dev base URLs out-of-band at integration time.
 
     **Auth:** HMAC headers (`X-Timestamp` + `X-Signature`) signed with `WebhookSecret`. No `X-Api-Secret` on this direction.
 
@@ -12,13 +12,10 @@ info:
   version: "1.3.0"
   contact:
     name: Phanu (konkui)
-    email: eecprogrammer@gmail.com
 
 servers:
-  - url: https://service.eeccollege.com
-    description: Production
-  - url: https://testservice.eeccollege.com
-    description: Development / integration test
+  - url: https://konkui.example
+    description: Placeholder — konkui provides the real prod/dev base URLs out-of-band
 
 paths:
   /webhooks/studentcare/webhook:

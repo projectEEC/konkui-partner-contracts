@@ -8,9 +8,7 @@ SC's home inside the partner-contract monorepo (migrated from the standalone
 ## Topology
 
 ```
-[konkui apps/web — agent UI]
-        │  REST + SignalR
-[konkui "advisor" platform module]
+[konkui]
    │                       ▲
    │ konkui → SC           │ SC → konkui webhook
    │ (X-Api-Secret /       │ (HMAC WebhookSecret,

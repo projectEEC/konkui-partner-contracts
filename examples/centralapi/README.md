@@ -20,13 +20,11 @@ konkui state `plans/centralapi-konkui-redesign.md`.
 ## Topology
 
 ```
-[konkui apps/web — agent UI]
-        │  REST + SignalR
-[konkui "central" platform module]
+[konkui]
    │                       ▲
    │ konkui → CA (HMAC)    │ CA → konkui webhook (HMAC, enriched envelope)
    ▼                       │
-[Central API  buapi.eeccollege.com]
+[Central API]
    │                       ▲
    │ CA → LINE             │ LINE → CA webhook (one URL, CA owns)
    │ (channel token)       │
